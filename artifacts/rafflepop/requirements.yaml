@@ -1,0 +1,17 @@
+packages:
+  "framer-motion": "For page transitions, popups, and smooth micro-interactions"
+  "canvas-confetti": "For the winning celebration effect"
+  "@types/canvas-confetti": "Type definitions for canvas-confetti"
+  "clsx": "Utility for conditionally joining classNames"
+  "tailwind-merge": "Utility to merge tailwind classes safely"
+  "date-fns": "For formatting dates and countdown calculations"
+
+images:
+  - path: "artifacts/rafflepop/public/images/bg-glow.png"
+    description: "Abstract soft radial glow in deep purple and gold on black background, very subtle and dark"
+    aspect_ratio: "1:1"
+
+notes:
+  - "Using generated orval hooks from @workspace/api-client-react"
+  - "Simulating the watch-ad experience with a 3-second timeout before calling the mutation"
+  - "Assuming mobile-first layout constrained to 480px width to mimic native app feel"

@@ -1,15 +1,20 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: RafflePop API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: user
+    description: User operations
+  - name: raffle
+    description: Raffle operations
+  - name: draws
+    description: Draw operations
 paths:
   /healthz:
     get:
@@ -24,6 +29,80 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /user/me:
+    get:
+      operationId: getMe
+      tags: [user]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /user/watch-ad:
+    post:
+      operationId: watchAd
+      tags: [user]
+      summary: Watch an ad to earn a ticket
+      responses:
+        "200":
+          description: Ticket earned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchAdResult"
+
+  /user/claim-streak:
+    post:
+      operationId: claimStreak
+      tags: [user]
+      summary: Claim daily streak reward
+      responses:
+        "200":
+          description: Streak claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimStreakResult"
+
+  /raffle/stats:
+    get:
+      operationId: getRaffleStats
+      tags: [raffle]
+      summary: Get current raffle statistics
+      responses:
+        "200":
+          description: Raffle stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RaffleStats"
+
+  /draws:
+    get:
+      operationId: getDraws
+      tags: [draws]
+      summary: Get past draw winners
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of draws
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Draw"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +113,121 @@ components:
       required:
         - status
 
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        tickets:
+          type: number
+        streakDays:
+          type: number
+        bestStreak:
+          type: number
+        lastStreakClaim:
+          type: string
+          nullable: true
+        adsWatchedToday:
+          type: number
+        totalWinnings:
+          type: number
+        createdAt:
+          type: string
+      required:
+        - id
+        - username
+        - tickets
+        - streakDays
+        - bestStreak
+        - lastStreakClaim
+        - adsWatchedToday
+        - totalWinnings
+        - createdAt
+
+    WatchAdResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        tickets:
+          type: number
+        message:
+          type: string
+      required:
+        - success
+        - tickets
+        - message
+
+    ClaimStreakResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        tickets:
+          type: number
+        streakDays:
+          type: number
+        bestStreak:
+          type: number
+        message:
+          type: string
+        alreadyClaimed:
+          type: boolean
+      required:
+        - success
+        - tickets
+        - streakDays
+        - bestStreak
+        - message
+        - alreadyClaimed
+
+    RaffleStats:
+      type: object
+      properties:
+        jackpot:
+          type: number
+        totalTickets:
+          type: number
+        uniqueParticipants:
+          type: number
+        drawTime:
+          type: string
+        myTickets:
+          type: number
+        myOdds:
+          type: number
+      required:
+        - jackpot
+        - totalTickets
+        - uniqueParticipants
+        - drawTime
+        - myTickets
+        - myOdds
+
+    Draw:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+        winnerUsername:
+          type: string
+        winnerEmoji:
+          type: string
+        prize:
+          type: number
+        totalTickets:
+          type: number
+        participants:
+          type: number
+      required:
+        - id
+        - date
+        - winnerUsername
+        - winnerEmoji
+        - prize
+        - totalTickets
+        - participants

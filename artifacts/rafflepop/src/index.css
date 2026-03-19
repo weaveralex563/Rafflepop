@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme inline {
+  --font-display: 'Syne', sans-serif;
+  --font-sans: 'DM Sans', sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-dim: hsla(var(--primary) / 0.15);
+  
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-dim: hsla(var(--secondary) / 0.15);
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 8px);
+}
+
+:root {
+  /* Dark mode gaming aesthetic with Purple & Gold */
+  --background: 260 50% 5%; /* #0a0612 approx */
+  --foreground: 0 0% 100%;
+  
+  --card: 257 41% 9%; /* #120d1f approx */
+  --card-foreground: 0 0% 100%;
+  
+  --border: 260 20% 15%;
+  --input: 260 20% 15%;
+  
+  --primary: 270 75% 54%; /* #8a33e0 */
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 45 93% 51%; /* #f5bc0d */
+  --secondary-foreground: 0 0% 0%;
+  
+  --muted: 260 15% 15%;
+  --muted-foreground: 260 10% 65%;
+  
+  --accent: 260 30% 20%;
+  --accent-foreground: 0 0% 100%;
+  
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  
+  --ring: 270 75% 54%;
+  --radius: 1rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased font-sans;
+    /* Prevent overscroll bounce on mobile to feel more native */
+    overscroll-behavior-y: none;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-secondary to-orange-500;
+  }
+  
+  .glass-panel {
+    @apply bg-card/80 backdrop-blur-xl border border-white/5 shadow-xl;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Custom Animations */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
