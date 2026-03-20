@@ -24,3 +24,10 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[userenv]
+
+[userenv.shared]
+SUPABASE_URL = "https://ffcillqhxuboeyduytrr.supabase.co"
+SUPABASE_KEY = "sb_publishable_PL3dSw1wv0m56tzp7fJ44Q_YKCeRXAO"
+ADMIN_SECRET = "rafflepop_admin_2024"
