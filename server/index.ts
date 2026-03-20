@@ -275,7 +275,7 @@ function pickWinner(tickets: any[], serverSeed: string, clientSeed: string): any
 async function addToBucket(bucket: string, amount: number) {
   await supabase.rpc("increment_bucket", {
     bucket_name: bucket, amount
-  }).catch(async () => {
+}).then(null, async () => {
     const { data } = await supabase
       .from("revenue_buckets")
       .select("balance, total_in")
@@ -307,7 +307,7 @@ async function deductFromBucket(bucket: string, amount: number): Promise<boolean
     .from("revenue_buckets")
     .update({
       balance: data.balance - amount,
-      total_out: (data.total_out || 0) + amount,
+      total_out: amount,
       updated_at: new Date().toISOString()
     })
     .eq("bucket_name", bucket);
