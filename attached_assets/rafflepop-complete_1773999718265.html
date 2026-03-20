@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<!-- Tells iOS to treat this as a full-screen webapp — removes bounce -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<!-- Prevents text size adjustment on orientation change -->
+<meta name="format-detection" content="telephone=no"/>
+<title>RafflePop — Watch to Win</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0612;--card:#120d1f;--card2:#1a1330;
+  --primary:#8a33e0;--primary-dim:rgba(138,51,224,0.15);
+  --secondary:#f5bc0d;--secondary-dim:rgba(245,188,13,0.15);
+  --muted:#6b7280;--border:rgba(255,255,255,0.07);--text:#fff;
+  --fire:#f97316;--fire2:#f59e0b;
+  --ice:#67e8f9;--ice-dim:rgba(103,232,249,0.12);
+  --vip:#a78bfa;--vip-dim:rgba(167,139,250,0.12);
+  --green:#22c55e;
+}
+html{
+  /* Lock html — prevents Telegram stealing scroll */
+  overflow:hidden;
+  position:fixed;
+  width:100%;
+  height:100%;
+  overscroll-behavior:none;
+  -webkit-overflow-scrolling:touch;
+  /* Use Telegram stable height if available */
+  height:var(--tg-vh, var(--app-height, 100dvh));
+}
+body{
+  overflow:hidden;
+  position:fixed;
+  width:100%;
+  height:100%;
+  overscroll-behavior:none;
+  /* Allow vertical pan inside body elements */
+  touch-action:pan-y;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+}
+.app{
+  display:flex;
+  flex-direction:column;
+  /* Use stable Telegram viewport height — prevents bottom cutoff */
+  height:var(--tg-vh, var(--app-height, 100dvh));
+  max-width:480px;
+  margin:0 auto;
+  position:relative;
+  overflow:hidden;
+}
+.glow{position:fixed;top:-100px;left:50%;transform:translateX(-50%);width:500px;height:500px;
+  background:radial-gradient(circle,rgba(138,51,224,0.1),transparent 70%);border-radius:50%;pointer-events:none;z-index:0}
+
+/* PAGES */
+.page{display:none;flex:1;flex-direction:column;overflow:hidden;position:relative;z-index:1}
+.page.active{display:flex}
+.scroll{
+  flex:1;
+  /* scroll not auto — scroll always creates a scroll container */
+  overflow-y:scroll;
+  /* Critical — contains scroll within this element, stops bubbling to Telegram */
+  overscroll-behavior-y:contain;
+  /* Smooth momentum scrolling on iOS */
+  -webkit-overflow-scrolling:touch;
+  /* Allows vertical pan within this container */
+  touch-action:pan-y;
+  padding:24px 16px 100px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  /* Relative position needed for scroll boundary detection */
+  position:relative;
+}
+.scroll::-webkit-scrollbar{display:none}
+
+/* NAV */
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+  z-index:100;padding:8px 16px 16px;background:linear-gradient(to top,var(--bg) 60%,transparent)}
+.nav-inner{background:rgba(18,13,31,0.95);backdrop-filter:blur(20px);border:1px solid var(--border);
+  border-radius:999px;padding:6px;display:flex;align-items:center;justify-content:space-around}
+.nav-btn{display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:999px;
+  border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;
+  font-weight:700;font-size:13px;cursor:pointer;transition:all .25s}
+.nav-btn.active{background:var(--primary);color:#fff;box-shadow:0 4px 20px rgba(138,51,224,0.4)}
+.nav-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px}
+.label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted);font-size:13px}
+
+/* BUTTONS */
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-family:'DM Sans',sans-serif;
+  font-weight:700;font-size:15px;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--primary),#6a1fc0);color:#fff;
+  box-shadow:0 4px 20px rgba(138,51,224,0.3)}
+.btn-gold{background:linear-gradient(135deg,var(--secondary),#f59e0b);color:#000}
+.btn-ghost{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border)}
+.btn-fire{background:linear-gradient(135deg,var(--fire),var(--fire2));color:#000}
+.btn-ice{background:linear-gradient(135deg,#0ea5e9,#67e8f9);color:#000}
+.btn-danger{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3)}
+
+/* JACKPOT */
+.jackpot-amount{font-family:'Syne',sans-serif;font-size:64px;font-weight:800;line-height:1;
+  background:linear-gradient(135deg,#fff 0%,var(--secondary) 60%,#f59e0b 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* AD BUTTONS */
+.ad-card{border-radius:20px;padding:16px;position:relative;overflow:hidden;border:1px solid}
+.ad-card.monetag{background:linear-gradient(135deg,rgba(249,115,22,0.12),rgba(249,115,22,0.04));
+  border-color:rgba(249,115,22,0.25)}
+.ad-glow{position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;
+  filter:blur(40px);pointer-events:none}
+.monetag .ad-glow{background:rgba(249,115,22,0.2)}
+.ad-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ad-network{display:flex;align-items:center;gap:7px}
+.ad-dot{width:8px;height:8px;border-radius:50%;background:var(--fire)}
+.ad-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--fire)}
+.ad-count{font-size:12px;font-weight:700;color:var(--fire)}
+
+/* AD PROGRESS BAR */
+.ad-progress-track{height:6px;background:rgba(255,255,255,0.05);border-radius:999px;overflow:hidden;margin-bottom:12px}
+.ad-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--fire),var(--fire2));
+  transition:width .3s ease}
+
+/* STREAK DOTS */
+.dots-row{display:flex;justify-content:space-between;gap:3px;margin:12px 0}
+.dot-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.s-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;border:1.5px solid var(--border);color:var(--muted);transition:all .3s}
+.s-dot.filled{background:linear-gradient(135deg,var(--fire),var(--fire2));
+  border-color:var(--fire);color:#000;box-shadow:0 0 10px rgba(249,115,22,0.35)}
+.s-dot.frozen{background:var(--ice-dim);border-color:var(--ice);color:var(--ice)}
+.s-dot.today-empty{border-color:var(--fire);color:var(--fire);background:rgba(249,115,22,0.08)}
+.dot-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.dot-today-lbl{color:var(--fire)}
+
+/* HEAT POPUP */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);
+  z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.show{opacity:1;pointer-events:all}
+.popup{background:linear-gradient(135deg,#1a0a3c,#0f0920);border:1px solid;border-radius:26px;
+  padding:28px 22px;text-align:center;max-width:340px;width:100%;position:relative;
+  transform:scale(.85);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.overlay.show .popup{transform:scale(1)}
+.popup-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.1);
+  border:none;border-radius:50%;width:28px;height:28px;color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:14px}
+
+/* LIQUIDATION */
+.liq-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);
+  z-index:210;display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .5s}
+.liq-overlay.show{opacity:1;pointer-events:all}
+.liq-card{background:linear-gradient(135deg,#0a0612,#0f0920);border:1px solid rgba(103,232,249,0.3);
+  border-radius:26px;padding:32px 24px;text-align:center;max-width:340px;width:100%}
+
+/* WIN POPUP */
+.win-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);
+  z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;
+  display:none}
+.win-card{background:linear-gradient(135deg,#1a0a3c,#170d30,#0f0920);
+  border:1px solid rgba(245,188,13,0.35);border-radius:28px;padding:32px 24px;
+  text-align:center;max-width:340px;width:100%;position:relative}
+
+/* PROGRESS */
+.progress-track{height:6px;background:rgba(255,255,255,0.05);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;border-radius:999px;transition:width .8s cubic-bezier(.34,1.56,.64,1)}
+
+/* WEEKLY DRAW CARD */
+.weekly-card{background:linear-gradient(135deg,rgba(167,139,250,0.12),rgba(138,51,224,0.06));
+  border:1px solid rgba(167,139,250,0.25);border-radius:18px;padding:18px}
+
+/* SUNDAY ENTRIES BADGE */
+.sunday-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;
+  border-radius:999px;background:var(--vip-dim);border:1px solid rgba(167,139,250,0.3);
+  font-size:12px;font-weight:700;color:var(--vip)}
+
+/* MILESTONE TEASER */
+.mystery-card{background:linear-gradient(135deg,rgba(245,188,13,0.08),rgba(138,51,224,0.08));
+  border:1px dashed rgba(245,188,13,0.3);border-radius:18px;padding:18px;text-align:center}
+
+/* SPINNER */
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* COUNTDOWN */
+.countdown-row{display:flex;align-items:center;justify-content:center;gap:8px}
+.cd-unit{text-align:center}
+.cd-num{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;
+  background:var(--card2);border-radius:8px;padding:6px 10px;display:block;min-width:44px}
+.cd-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:3px}
+.cd-sep{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;
+  color:rgba(138,51,224,0.4);margin-bottom:14px}
+
+/* TOAST */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:var(--primary);color:#fff;padding:10px 20px;border-radius:999px;
+  font-size:13px;font-weight:700;z-index:300;opacity:0;transition:opacity .3s;
+  pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* MENU ITEM */
+.menu-item{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s}
+.menu-item:hover{border-color:rgba(138,51,224,0.4);background:rgba(255,255,255,0.03)}
+.menu-icon{width:40px;height:40px;border-radius:50%;background:var(--primary-dim);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes melt{0%{opacity:1;transform:scale(1)}50%{transform:scale(1.1)}100%{opacity:0;transform:scale(0.3) translateY(20px)}}
+@keyframes freeze{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(180deg) brightness(1.5)}}
+.fade-up{animation:fadeUp .3s ease both}
+
+canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:150}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="toast" id="toast"></div>
+
+<!-- ══ HEAT UP POPUP ══ -->
+<div class="overlay" id="heat-overlay">
+  <div class="popup" style="border-color:rgba(249,115,22,0.4)">
+    <button class="popup-close" onclick="ignoreHeat()">✕</button>
+    <div style="font-size:56px;margin-bottom:10px" id="heat-emoji">🧊</div>
+    <h2 style="font-size:20px;margin-bottom:6px">Your streak is frozen!</h2>
+    <p class="muted" style="margin-bottom:6px">You missed yesterday's 7-ad requirement.</p>
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+      border-radius:12px;padding:12px;margin:14px 0;font-size:13px">
+      If you don't heat up your streak you'll lose:<br/>
+      <strong style="color:#f87171" id="heat-lose-streak">• Your X-day streak</strong><br/>
+      <strong style="color:#f87171" id="heat-lose-sundays">• X banked Sundays</strong>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px">
+      ⏰ Heat window expires in <strong style="color:var(--fire)" id="heat-timer">23:59:59</strong>
+    </div>
+    <button class="btn btn-fire" style="margin-bottom:10px" onclick="heatUpStreak()" id="heat-free-btn">
+      🔥 Heat Up — Use Free Heat
+    </button>
+    <button class="btn btn-ghost" style="font-size:13px;margin-bottom:10px" onclick="showPurchaseOptions()">
+      ⭐ Buy Heat — 50 Stars (3 heats)
+    </button>
+    <button class="btn btn-danger" style="font-size:12px" onclick="ignoreHeat()">
+      Let streak reset →
+    </button>
+    <p style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:10px" id="heat-free-remaining">1 free heat remaining this month</p>
+  </div>
+</div>
+
+<!-- ══ LIQUIDATION OVERLAY ══ -->
+<div class="liq-overlay" id="liq-overlay">
+  <div class="liq-card">
+    <div style="font-size:64px;margin-bottom:12px" id="liq-emoji">❄️</div>
+    <h2 style="font-size:22px;font-family:'Syne',sans-serif;margin-bottom:8px" id="liq-title" style="color:var(--ice)">
+      Streak Melted
+    </h2>
+    <p class="muted" style="margin-bottom:16px;line-height:1.6" id="liq-text">
+      Your streak has melted.
+    </p>
+    <div style="background:rgba(103,232,249,0.05);border:1px solid rgba(103,232,249,0.15);
+      border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+        <span class="muted">Streak lost</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--ice)" id="liq-streak">0 days</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+        <span class="muted">Banked Sundays remaining</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--vip)" id="liq-sundays">0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px">
+        <span class="muted">Badges kept</span>
+        <span style="color:var(--green)">✓ All badges kept</span>
+      </div>
+    </div>
+    <!-- Floor protection / restart info — filled dynamically -->
+    <div id="liq-extra" style="margin-bottom:12px"></div>
+    <div id="liq-restart" style="margin-bottom:16px"></div>
+    <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:20px;font-style:italic">
+      "Every legend started at day 1."
+    </p>
+    <button class="btn btn-primary" onclick="closeLiquidation()">
+      Start New Streak →
+    </button>
+  </div>
+</div>
+
+<!-- ══ WIN POPUP ══ -->
+<div class="win-overlay" id="win-overlay">
+  <div class="win-card">
+    <button class="popup-close" onclick="dismissWin()" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:28px;height:28px;color:#fff;cursor:pointer;position:absolute;top:14px;right:14px">✕</button>
+    <div style="font-size:72px;margin-bottom:12px">🏆</div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:24px;margin-bottom:6px">You Won!</h2>
+    <p class="muted" style="margin-bottom:16px">Today's lucky winner!</p>
+    <div style="background:var(--secondary-dim);border:1px solid rgba(245,188,13,0.3);
+      border-radius:14px;padding:16px;margin-bottom:16px">
+      <div class="label" style="color:var(--secondary);margin-bottom:4px">Prize Won</div>
+      <div class="jackpot-amount" style="font-size:48px" id="win-prize">$0</div>
+    </div>
+    <button class="btn btn-gold" onclick="claimPrize()">Claim Prize 🎉</button>
+  </div>
+</div>
+
+<div class="app">
+  <div class="glow"></div>
+
+  <!-- ══════════ HOME ══════════ -->
+  <div class="page active" id="page-home">
+    <div class="scroll">
+
+      <!-- Header -->
+      <header style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--primary),#5b1fa8);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(138,51,224,0.4)">🎱</div>
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;line-height:1">RafflePop</div>
+            <div style="font-size:11px;color:var(--muted)">Watch to Play</div>
+          </div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:999px;padding:4px 14px">
+          <span style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em" id="header-username">User_00000</span>
+        </div>
+      </header>
+
+      <!-- Daily Jackpot -->
+      <div style="text-align:center;padding:12px 0 4px">
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px;font-size:12px;color:var(--muted)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(138,51,224,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Draw in <span style="font-family:monospace;font-weight:700;color:rgba(255,255,255,0.8);margin-left:2px" id="home-timer">--:--:--</span> (WAT)
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:999px;background:var(--secondary-dim);border:1px solid rgba(245,188,13,0.3);margin-bottom:12px">
+          <span style="font-size:13px;color:var(--secondary);font-weight:700">🏆 Today's Jackpot</span>
+        </div>
+        <div class="jackpot-amount" id="jackpot-display">$0.00</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);margin-top:8px;font-size:13px">
+          <span id="pool-size">0</span> tickets in play
+        </div>
+      </div>
+
+      <!-- Monetag Ad Button -->
+      <div class="ad-card monetag">
+        <div class="ad-glow"></div>
+        <div class="ad-head">
+          <div class="ad-network">
+            <div class="ad-dot"></div>
+            <span class="ad-name">Monetag</span>
+            <span style="font-size:10px;color:rgba(255,255,255,0.3)">· Web Ads</span>
+          </div>
+          <span class="ad-count"><span id="ad-count">0</span>/7 today</span>
+        </div>
+        <!-- 7-ad progress bar -->
+        <div class="ad-progress-track">
+          <div class="ad-progress-fill" id="ad-progress" style="width:0%"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:12px">
+          <span style="color:rgba(255,255,255,0.4)">🎟️ 5 tickets per ad</span>
+          <span style="color:var(--fire);font-weight:700" id="ad-streak-status">Watch 7 ads to unlock streak</span>
+        </div>
+        <button class="btn" id="ad-btn" onclick="watchAd()"
+          style="background:linear-gradient(135deg,var(--fire),var(--fire2));color:#000;box-shadow:0 4px 20px rgba(249,115,22,0.3)">
+          <span style="font-size:18px">📺</span>
+          <span id="ad-btn-text">Watch Ad (+5 Tickets)</span>
+        </button>
+      </div>
+
+      <!-- Streak Card -->
+      <div class="card" id="streak-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:22px" id="streak-icon-main">🔥</span>
+            <div>
+              <div style="font-weight:700;font-size:14px">Daily Streak</div>
+              <div style="font-size:11px;color:var(--muted)">Best: <span id="best-streak">0</span> days</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:800;line-height:1" id="streak-num">0</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:700">days</div>
+          </div>
+        </div>
+
+        <!-- Tier badge -->
+        <div id="tier-badge" style="margin-bottom:12px"></div>
+
+        <!-- 7-day dots -->
+        <div class="dots-row" id="streak-dots"></div>
+
+        <!-- Progress to next milestone -->
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+            <span class="muted">Next: Day <span id="next-milestone-day">7</span></span>
+            <span style="font-weight:700;color:var(--fire)" id="next-milestone-reward">+1 Sunday entry</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="streak-progress-fill" style="width:0%;background:linear-gradient(90deg,var(--fire),var(--fire2))"></div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:3px"><span id="streak-fraction">0/7</span></div>
+        </div>
+
+        <!-- Claim button -->
+        <button class="btn" id="streak-btn" onclick="claimStreak()" disabled
+          style="background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border)">
+          <span id="streak-btn-text">Watch 7 ads first to unlock</span>
+        </button>
+
+        <!-- Banked sundays display -->
+        <div id="banked-sundays-row" style="margin-top:12px;display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:12px;color:var(--muted)">Banked Sunday entries</span>
+            <span class="sunday-badge">📅 <span id="banked-count">0</span> Sundays</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Draw Card -->
+      <div class="weekly-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <div style="font-weight:700;font-size:14px;color:var(--vip)">📅 Weekly Draw</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Every Sunday midnight WAT</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--vip)" id="weekly-jackpot">$0.00</div>
+            <div style="font-size:10px;color:var(--muted)">prize pool</div>
+          </div>
+        </div>
+
+        <!-- Sunday countdown -->
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:center">Next draw in</div>
+          <div class="countdown-row" id="sunday-countdown">
+            <div class="cd-unit"><span class="cd-num" id="sd-d">0</span><div class="cd-lbl">days</div></div>
+            <span class="cd-sep">:</span>
+            <div class="cd-unit"><span class="cd-num" id="sd-h">00</span><div class="cd-lbl">hrs</div></div>
+            <span class="cd-sep">:</span>
+            <div class="cd-unit"><span class="cd-num" id="sd-m">00</span><div class="cd-lbl">min</div></div>
+          </div>
+        </div>
+
+        <div id="weekly-status" style="text-align:center">
+          <div style="font-size:12px;color:var(--muted)">Complete a 7-day streak to qualify</div>
+        </div>
+      </div>
+
+      <!-- Mystery prize teaser (shows at streak >= 300) -->
+      <div class="mystery-card" id="mystery-card" style="display:none">
+        <div style="font-size:32px;margin-bottom:8px">🔮</div>
+        <div style="font-weight:700;margin-bottom:6px;color:var(--secondary)">Something Big Is Coming</div>
+        <div class="muted" style="font-size:13px;line-height:1.6" id="mystery-text">
+          Keep going. Day 365 holds a mystery prize.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════ STATS ══════════ -->
+  <div class="page" id="page-stats">
+    <div class="scroll">
+      <header>
+        <h1 style="font-size:26px;font-family:'Syne',sans-serif">Statistics</h1>
+        <p class="muted">Today's draw insights</p>
+      </header>
+      <div id="stat-cards" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ WINNERS ══════════ -->
+  <div class="page" id="page-winners">
+    <div class="scroll">
+      <header>
+        <h1 style="font-size:26px;font-family:'Syne',sans-serif">Hall of Fame</h1>
+        <p class="muted">Daily & weekly draw winners</p>
+      </header>
+      <div id="winners-list"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ PROFILE ══════════ -->
+  <div class="page" id="page-profile">
+    <div class="scroll">
+      <header>
+        <h1 style="font-size:26px;font-family:'Syne',sans-serif">Profile</h1>
+        <p class="muted">Your account</p>
+      </header>
+      <div class="card">
+        <div class="label" style="margin-bottom:8px">User ID</div>
+        <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;
+          padding:12px;font-family:monospace;font-weight:700;word-break:break-all" id="profile-uid">-</div>
+      </div>
+      <!-- Streak summary on profile -->
+      <div class="card" id="profile-streak-summary"></div>
+      <!-- Former streak tag -->
+      <div id="former-tag-wrap" style="display:none">
+        <div style="background:rgba(103,232,249,0.05);border:1px solid rgba(103,232,249,0.15);
+          border-radius:12px;padding:12px;text-align:center">
+          <span style="font-size:11px;color:var(--ice);font-weight:700" id="former-tag">⚡ Former 0-Day Streak Holder</span>
+        </div>
+      </div>
+      <div id="profile-menu" style="display:flex;flex-direction:column;gap:10px"></div>
+      <button class="btn btn-gold" onclick="navigate('withdraw')">💰 Withdraw Winnings</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn btn-ghost" style="font-size:12px" onclick="navigate('terms')">📄 Terms</button>
+        <button class="btn btn-ghost" style="font-size:12px" onclick="navigate('privacy')">🔒 Privacy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sub-pages (prizes, withdraw, faq, referral, contact, terms, privacy) -->
+  <div class="page" id="page-prizes"><div class="scroll" id="prizes-list"></div></div>
+  <div class="page" id="page-withdraw"><div class="scroll" id="withdraw-content"></div></div>
+  <div class="page" id="page-faq"><div class="scroll" id="faq-list"></div></div>
+  <div class="page" id="page-referral"><div class="scroll" id="referral-content"></div></div>
+  <div class="page" id="page-contact"><div class="scroll" id="contact-content"></div></div>
+  <div class="page" id="page-terms"><div class="scroll" id="terms-list"></div></div>
+  <div class="page" id="page-privacy"><div class="scroll" id="privacy-list"></div></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <button class="nav-btn active" id="nav-home" onclick="navigate('home')">
+        <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" id="nav-stats" onclick="navigate('stats')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Stats</span>
+      </button>
+      <button class="nav-btn" id="nav-winners" onclick="navigate('winners')">
+        <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+        <span>Winners</span>
+      </button>
+      <button class="nav-btn" id="nav-profile" onclick="navigate('profile')">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Profile</span>
+      </button>
+    </div>
+  </nav>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════
+const BASE_URL = ''; // Set to Railway URL in production
+
+const MILESTONES = {7:1, 14:2, 30:4, 60:8, 90:12, 180:24, 365:48};
+const MILESTONE_DAYS = [7,14,30,60,90,180,365];
+const TIERS = [
+  {min:0,   name:'Newcomer',  icon:'🌱', color:'#cd853f'},
+  {min:7,   name:'Regular',   icon:'⚡', color:'#c0c0c0'},
+  {min:14,  name:'Dedicated', icon:'🔥', color:var_secondary},
+  {min:30,  name:'Champion',  icon:'🏅', color:'#67e8f9'},
+  {min:60,  name:'VIP',       icon:'👑', color:'#a78bfa'},
+  {min:90,  name:'Elite',     icon:'💎', color:'#67e8f9'},
+  {min:180, name:'Icon',      icon:'🌟', color:'#f5bc0d'},
+  {min:365, name:'Legend',    icon:'🏆', color:'#f5bc0d'},
+];
+
+function var_secondary() { return '#f5bc0d'; }
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+function getUsername() {
+  let u = localStorage.getItem('rafflepop_username');
+  if (!u) {
+    u = `User_${Math.floor(10000 + Math.random() * 90000)}`;
+    localStorage.setItem('rafflepop_username', u);
+  }
+  return u;
+}
+
+const USERNAME = getUsername();
+
+function todayKey() { return new Date().toISOString().split('T')[0]; }
+function thisMonth() { return new Date().toISOString().slice(0,7); }
+
+// Local state (synced with backend)
+let S = {
+  // Game
+  stats: { poolSize:0, jackpot:0, weeklyJackpot:0, weeklyQualifiers:0, nextSunday:'', lastDrawId:null, lastDrawPrize:0, lastDrawWinnerUsername:'' },
+  userStats: { adsWatchedToday:0, myTickets:0, totalTickets:0, totalPlayers:0, myChances:'0%', streakClaimedToday:false, qualifiesThisSunday:false },
+  // Streak
+  streak: { currentStreak:0, longestStreak:0, formerLongestStreak:0, streakStatus:'active', heatWindowSecsLeft:0, bankedSundays:0, badges:[], freeHeatsRemaining:1, isVip:false },
+  // UI
+  watchingAd: false,
+  draws: [],
+  prizes: [],
+};
+
+// ═══════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════
+async function api(path, opts={}) {
+  try {
+    const res = await fetch(BASE_URL + path, opts);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  } catch(e) {
+    console.warn('[API]', path, e.message);
+    return null;
+  }
+}
+
+async function init() {
+  await api('/api/auth', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ username: USERNAME })
+  });
+  await Promise.all([fetchStats(), fetchUserStats(), fetchStreak()]);
+  renderAll();
+  checkHeatWindow();
+  checkWinPopup();
+}
+
+async function fetchStats() {
+  const d = await api('/api/stats');
+  if (d) S.stats = d;
+}
+
+async function fetchUserStats() {
+  const d = await api(`/api/user/${USERNAME}/stats`);
+  if (d) S.userStats = d;
+}
+
+async function fetchStreak() {
+  const d = await api(`/api/streak/${USERNAME}`);
+  if (d) S.streak = d;
+}
+
+async function fetchDraws() {
+  const d = await api('/api/draws');
+  if (d) S.draws = d;
+}
+
+async function fetchPrizes() {
+  const d = await api(`/api/user/${USERNAME}/prizes`);
+  if (d) S.prizes = d;
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const nb = document.getElementById('nav-' + page);
+  if (nb) nb.classList.add('active');
+
+  if (page === 'home' || page === 'stats') { fetchStats(); fetchUserStats(); fetchStreak(); }
+  if (page === 'winners') { fetchDraws(); renderWinners(); }
+  if (page === 'prizes') { fetchPrizes(); renderPrizes(); }
+  if (page === 'withdraw') { fetchPrizes(); renderWithdraw(); }
+  if (page === 'profile') renderProfile();
+  if (page === 'faq') renderFAQ();
+  if (page === 'referral') renderReferral();
+  if (page === 'terms') renderTerms();
+  if (page === 'privacy') renderPrivacy();
+
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+function renderAll() {
+  renderHeader();
+  renderJackpot();
+  renderAdButton();
+  renderStreak();
+  renderWeeklyDraw();
+  renderStats();
+  renderMysteryCard();
+  renderProfileStreak();
+}
+
+function renderHeader() {
+  const el = document.getElementById('header-username');
+  if (el) el.textContent = USERNAME;
+  const pu = document.getElementById('profile-uid');
+  if (pu) pu.textContent = USERNAME;
+}
+
+function renderJackpot() {
+  const j = document.getElementById('jackpot-display');
+  if (j) j.textContent = `$${(S.stats.jackpot||0).toFixed(2)}`;
+  const ps = document.getElementById('pool-size');
+  if (ps) ps.textContent = S.stats.poolSize || 0;
+  const wj = document.getElementById('weekly-jackpot');
+  if (wj) wj.textContent = `$${(S.stats.weeklyJackpot||0).toFixed(2)}`;
+}
+
+function renderAdButton() {
+  const watched = S.userStats.adsWatchedToday || 0;
+  const pct = Math.min(100, (watched / 7) * 100);
+
+  const prog = document.getElementById('ad-progress');
+  if (prog) prog.style.width = pct + '%';
+
+  const cnt = document.getElementById('ad-count');
+  if (cnt) cnt.textContent = watched;
+
+  const status = document.getElementById('ad-streak-status');
+  if (status) {
+    if (watched >= 7) {
+      status.textContent = '✅ 7 ads done — claim streak below!';
+      status.style.color = 'var(--green)';
+    } else {
+      status.textContent = `Watch ${7 - watched} more to unlock streak`;
+      status.style.color = 'rgba(249,115,22,0.7)';
+    }
+  }
+
+  const btn = document.getElementById('ad-btn');
+  const txt = document.getElementById('ad-btn-text');
+  if (btn && txt) {
+    if (S.watchingAd) {
+      btn.disabled = true;
+      txt.innerHTML = '<span class="spinner"></span> Watching...';
+    } else {
+      btn.disabled = false;
+      txt.innerHTML = '📺 Watch Ad (+5 Tickets)';
+    }
+  }
+}
+
+function renderStreak() {
+  const sk = S.streak;
+  const s = sk.currentStreak || 0;
+  const color = getStreakColor(s);
+
+  // Number
+  const sn = document.getElementById('streak-num');
+  if (sn) { sn.textContent = s; sn.style.color = color; }
+
+  const bs = document.getElementById('best-streak');
+  if (bs) bs.textContent = sk.longestStreak || 0;
+
+  // Icon
+  const si = document.getElementById('streak-icon-main');
+  if (si) si.textContent = sk.streakStatus === 'heat_window' ? '🧊' : s >= 60 ? '👑' : s >= 30 ? '⚡' : '🔥';
+
+  // Tier badge
+  const tier = getTier(s);
+  const tb = document.getElementById('tier-badge');
+  if (tb) tb.innerHTML = `<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;
+    border-radius:999px;font-size:11px;font-weight:700;border:1px solid ${tier.color}40;
+    background:${tier.color}15;color:${tier.color}">
+    ${tier.icon} ${tier.name}${s >= 60 ? ' · VIP Active' : ''}
+  </div>`;
+
+  // 7-day dots
+  const days = ['S','M','T','W','T','F','S'];
+  const dotsEl = document.getElementById('streak-dots');
+  if (dotsEl) {
+    dotsEl.innerHTML = Array.from({length:7}, (_,i) => {
+      const daysAgo = 6 - i;
+      const filled = daysAgo < s || (daysAgo === 0 && sk.streakStatus === 'active' && S.userStats.streakClaimedToday);
+      const frozen = daysAgo === 0 && sk.streakStatus === 'heat_window';
+      const isToday = daysAgo === 0;
+      const dayLabel = days[new Date(Date.now() - daysAgo * 86400000).getDay()];
+      return `<div class="dot-wrap">
+        <div class="s-dot ${filled?'filled':''} ${frozen?'frozen':''} ${isToday&&!filled&&!frozen?'today-empty':''}">
+          ${frozen ? '🧊' : filled ? '✓' : dayLabel}
+        </div>
+        <div class="dot-lbl ${isToday?'dot-today-lbl':''}">${isToday?'Today':dayLabel}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Milestone progress — uses tier anchor so progress shows within current tier
+  // e.g. user anchored at day 180, rebuilding toward 365 → shows 0/185 not 0/365
+  const tierAnchor = sk.tierAnchor || 0;
+  const nextTarget = sk.nextTarget || (MILESTONE_DAYS.find(m => m > s) || 365);
+  const tierLength = nextTarget - tierAnchor;
+  const progressInTier = s; // always counts from 0 after reset
+  const pct = tierLength > 0 ? (progressInTier / tierLength) * 100 : 100;
+
+  const pf = document.getElementById('streak-progress-fill');
+  if (pf) { pf.style.width = Math.min(100,pct)+'%'; pf.style.background = `linear-gradient(90deg,${color},${color}99)`; }
+
+  const nd = document.getElementById('next-milestone-day');
+  if (nd) nd.textContent = nextTarget;
+
+  // Show reward preview including diminishing returns
+  const nextReward = sk.nextRewardSundays ?? (MILESTONES[nextTarget] || 48);
+  const nr = document.getElementById('next-milestone-reward');
+  if (nr) {
+    nr.textContent = `+${nextReward} Sunday${nextReward !== 1 ? 's' : ''}`;
+    nr.style.color = color;
+    // Show dimmed label if rebuild attempt
+    const attempts = sk.milestone_attempts || {};
+    const attemptCount = attempts[nextTarget] || 0;
+    if (attemptCount > 0) {
+      nr.textContent += ` (${attemptCount === 1 ? '50%' : '25%'} rebuild)`;
+      nr.style.opacity = '0.7';
+    } else {
+      nr.style.opacity = '1';
+    }
+  }
+
+  const sf = document.getElementById('streak-fraction');
+  if (sf) sf.textContent = `${progressInTier}/${tierLength} days in tier`;
+
+  // Claim button
+  const btn = document.getElementById('streak-btn');
+  const btnTxt = document.getElementById('streak-btn-text');
+  if (btn && btnTxt) {
+    const adsOk = (S.userStats.adsWatchedToday || 0) >= 7;
+    const claimed = S.userStats.streakClaimedToday;
+    const inHeat = sk.streakStatus === 'heat_window';
+
+    if (inHeat) {
+      btn.style.cssText = 'background:linear-gradient(135deg,#0ea5e9,#67e8f9);color:#000;border:none';
+      btn.disabled = false;
+      btnTxt.textContent = '🔥 Heat Up Your Streak!';
+      btn.onclick = () => showHeatPopup();
+    } else if (claimed) {
+      btn.style.cssText = 'background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border)';
+      btn.disabled = true;
+      btnTxt.textContent = '✓ Streak claimed — see you tomorrow!';
+    } else if (adsOk) {
+      btn.style.cssText = `background:linear-gradient(135deg,${color},${color}cc);color:#000;border:none;box-shadow:0 4px 20px ${color}40`;
+      btn.disabled = false;
+      btnTxt.textContent = '🔥 Claim Daily Streak';
+      btn.onclick = claimStreak;
+    } else {
+      btn.style.cssText = 'background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border)';
+      btn.disabled = true;
+      btnTxt.textContent = `Watch ${7 - (S.userStats.adsWatchedToday||0)} more ads to unlock`;
+    }
+  }
+
+  // Banked Sundays
+  const bsRow = document.getElementById('banked-sundays-row');
+  const bc = document.getElementById('banked-count');
+  if (bsRow && bc) {
+    if (sk.bankedSundays > 0) {
+      bsRow.style.display = 'block';
+      bc.textContent = sk.bankedSundays;
+    } else {
+      bsRow.style.display = 'none';
+    }
+  }
+}
+
+function renderWeeklyDraw() {
+  // Sunday countdown
+  const now = new Date();
+  const wat = new Date(now.getTime() + 3600000);
+  const dayOfWeek = wat.getUTCDay();
+  const daysUntilSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
+  const totalSecsUntilSunday = daysUntilSunday * 86400
+    - wat.getUTCHours() * 3600 - wat.getUTCMinutes() * 60 - wat.getUTCSeconds();
+
+  const d = Math.floor(totalSecsUntilSunday / 86400);
+  const h = Math.floor((totalSecsUntilSunday % 86400) / 3600);
+  const m = Math.floor((totalSecsUntilSunday % 3600) / 60);
+  const fmt = n => String(n).padStart(2,'0');
+
+  const sdd = document.getElementById('sd-d'); if (sdd) sdd.textContent = d;
+  const sdh = document.getElementById('sd-h'); if (sdh) sdh.textContent = fmt(h);
+  const sdm = document.getElementById('sd-m'); if (sdm) sdm.textContent = fmt(m);
+
+  // Qualification status
+  const ws = document.getElementById('weekly-status');
+  if (ws) {
+    if (S.userStats.qualifiesThisSunday) {
+      ws.innerHTML = `<div style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.25);border-radius:10px;padding:10px;font-size:12px;color:var(--vip);font-weight:700">
+        ✅ You qualify for this Sunday's draw!<br/>
+        <span style="font-weight:400;color:rgba(167,139,250,0.6)">${S.stats.weeklyQualifiers || 0} participants so far</span>
+      </div>`;
+    } else {
+      ws.innerHTML = `<div style="font-size:12px;color:var(--muted);text-align:center">
+        Complete a 7-day streak to qualify for Sunday's draw
+      </div>`;
+    }
+  }
+}
+
+function renderStats() {
+  const s = S.userStats;
+  const sc = document.getElementById('stat-cards');
+  if (!sc) return;
+  const cards = [
+    { label:"Today's Total Tickets", value: s.totalTickets||0, color:'#3b82f6' },
+    { label:"Total Players", value: s.totalPlayers||0, color:'var(--primary)' },
+    { label:"My Tickets", value: s.myTickets||0, color:var_secondary() },
+    { label:"My Win Chance", value: s.myChances||'0%', color:'#22c55e' },
+    { label:"Ads Watched Today", value: `${s.adsWatchedToday||0}/7`, color:'var(--fire)' },
+    { label:"Banked Sundays", value: S.streak.bankedSundays||0, color:'var(--vip)' },
+  ];
+  sc.innerHTML = cards.map((c,i) => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;
+      display:flex;align-items:center;justify-content:space-between" class="fade-up">
+      <div>
+        <div class="muted" style="font-size:12px;margin-bottom:6px">${c.label}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:${c.color}">${c.value}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderWinners() {
+  const el = document.getElementById('winners-list');
+  if (!el) return;
+  if (!S.draws.length) {
+    el.innerHTML = `<div style="text-align:center;padding:48px 20px;background:var(--card);border:1px dashed var(--border);border-radius:18px">
+      <div style="font-size:48px;margin-bottom:12px">🏆</div>
+      <p class="muted">No draws yet.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML = S.draws.map((d,i) => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;
+      display:flex;align-items:center;justify-content:space-between;margin-bottom:10px" class="fade-up">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--secondary-dim);display:flex;align-items:center;justify-content:center;font-size:20px">
+          ${d.draw_type === 'weekly' ? '📅' : '🏆'}
+        </div>
+        <div>
+          <div style="font-weight:700">${d.winner_username || 'Unknown'}</div>
+          <div class="muted" style="font-size:11px">${d.draw_date} · ${d.draw_type}</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--secondary)">$${(d.prize_amount||0).toFixed(2)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderProfile() {
+  const menu = document.getElementById('profile-menu');
+  if (!menu) return;
+  const items = [
+    { page:'prizes', icon:'🏆', label:'My Prizes', desc:'View winning history' },
+    { page:'referral', icon:'👥', label:'Invite Friends', desc:'Earn tickets per referral' },
+    { page:'faq', icon:'❓', label:'FAQ', desc:'Frequently asked questions' },
+    { page:'contact', icon:'✉️', label:'Contact Us', desc:'Send us a message' },
+  ];
+  menu.innerHTML = items.map(item => `
+    <div class="menu-item" onclick="navigate('${item.page}')">
+      <div class="menu-icon">${item.icon}</div>
+      <div style="flex:1"><div style="font-weight:700">${item.label}</div>
+        <div class="muted" style="font-size:12px">${item.desc}</div></div>
+      <span style="color:var(--muted);font-size:18px">›</span>
+    </div>`).join('');
+}
+
+function renderProfileStreak() {
+  const el = document.getElementById('profile-streak-summary');
+  if (!el) return;
+  const sk = S.streak;
+  const s = sk.currentStreak || 0;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-weight:700">🔥 Streak</span>
+      <span style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:${getStreakColor(s)}">${s} days</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
+      <span>Best: ${sk.longestStreak||0} days</span>
+      <span>Banked Sundays: ${sk.bankedSundays||0}</span>
+    </div>`;
+
+  // Former tag
+  const ftw = document.getElementById('former-tag-wrap');
+  const ft = document.getElementById('former-tag');
+  if (ftw && ft && sk.formerLongestStreak > 0 && s === 0) {
+    ftw.style.display = 'block';
+    ft.textContent = `⚡ Former ${sk.formerLongestStreak}-Day Streak Holder`;
+  } else if (ftw) {
+    ftw.style.display = 'none';
+  }
+}
+
+function renderMysteryCard() {
+  const s = S.streak.currentStreak || 0;
+  const mc = document.getElementById('mystery-card');
+  const mt = document.getElementById('mystery-text');
+  if (!mc || !mt) return;
+  if (s >= 300) {
+    mc.style.display = 'block';
+    if (s >= 360) mt.textContent = `Day 365 is ${365-s} days away. Your prize is confirmed and waiting. 👀`;
+    else if (s >= 330) mt.textContent = `Something massive awaits at day 365. The prize pool is growing. Keep going.`;
+    else if (s >= 300) mt.textContent = `You're in the final stretch. Day 365 holds a mystery prize we can't reveal yet. 👀`;
+  } else {
+    mc.style.display = 'none';
+  }
+}
+
+function renderPrizes() {
+  const el = document.getElementById('prizes-list');
+  if (!el) return;
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">My Prizes</div>
+    <div class="muted" style="font-size:12px">Your winning history</div></div>
+  </div>` + (!S.prizes.length
+    ? `<div style="text-align:center;padding:48px 20px;background:var(--card);border:1px dashed var(--border);border-radius:18px">
+        <div style="font-size:48px;opacity:.5;margin-bottom:12px">🏆</div>
+        <p class="muted">No prizes yet. Keep playing!</p></div>`
+    : S.prizes.map(p => `
+      <div style="background:linear-gradient(90deg,rgba(245,188,13,0.1),transparent);border:1px solid rgba(245,188,13,0.2);border-radius:14px;padding:16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-weight:700">${p.draw_type === 'weekly' ? '📅 Weekly' : '🏆 Daily'} Draw</div>
+          <div class="muted" style="font-size:11px">${p.draw_date}</div>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--secondary)">$${(p.prize_amount||0).toFixed(2)}</div>
+      </div>`).join(''));
+}
+
+function renderWithdraw() {
+  const el = document.getElementById('withdraw-content');
+  if (!el) return;
+  const total = S.prizes.reduce((s,p) => s + (p.prize_amount||0), 0);
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Withdraw</div>
+    <div class="muted" style="font-size:12px">Cash out your winnings</div></div>
+  </div>
+  <div style="background:linear-gradient(135deg,var(--secondary-dim),rgba(245,188,13,0.03));border:1px solid rgba(245,188,13,0.3);border-radius:18px;padding:28px;text-align:center">
+    <div class="muted" style="margin-bottom:6px">Available Balance</div>
+    <div style="font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--secondary)">$${total.toFixed(2)}</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Minimum withdrawal: $5.00</div>
+  </div>
+  ${total >= 5
+    ? `<button class="btn btn-gold" onclick="showToast('Withdrawal request submitted!')">Withdraw $${total.toFixed(2)}</button>`
+    : `<div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:14px;padding:20px;text-align:center">
+        <p style="color:#fdba74;font-weight:700;margin-bottom:6px">Minimum $5.00 Required</p>
+        <p class="muted" style="font-size:12px">You have $${total.toFixed(2)}. Keep winning!</p>
+       </div>`
+  }`;
+}
+
+function renderReferral() {
+  const el = document.getElementById('referral-content');
+  if (!el) return;
+  const code = `RAFF-${USERNAME.replace('User_','').slice(0,6).toUpperCase()}`;
+  const link = `t.me/RafflePopBot?start=${code}`;
+  window._refLink = link;
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Invite Friends</div>
+    <div class="muted" style="font-size:12px">Earn tickets per referral</div></div>
+  </div>
+  <p class="muted" style="font-size:13px">Friends who join via your link both get bonus tickets. You earn milestone rewards as they engage.</p>
+  <div class="card">
+    <div class="label" style="margin-bottom:8px">Your referral link</div>
+    <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+      <span style="flex:1;font-size:11px;color:var(--muted);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${link}</span>
+      <button onclick="navigator.clipboard.writeText('${link}');showToast('🔗 Link copied!')" style="background:none;border:none;color:var(--primary);font-weight:700;font-size:12px;cursor:pointer">Copy</button>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('https://t.me/share/url?url=${encodeURIComponent(link)}')">📤 Share via Telegram</button>
+  </div>`;
+}
+
+function renderFAQ() {
+  const el = document.getElementById('faq-list');
+  if (!el) return;
+  const faqs = [
+    {q:'How do I earn tickets?', a:'Watch 7 Monetag ads daily. Each ad gives 5 tickets automatically entered into the daily draw.'},
+    {q:'How does the weekly draw work?', a:'Complete a 7-day streak (watch 7 ads AND claim streak every day for 7 days). You automatically qualify for that Sunday\'s draw with equal chance as all other qualifiers.'},
+    {q:'What happens if I miss a day?', a:'Your streak auto-freezes. You have 24 hours after returning to heat it up and save your streak. Otherwise it liquidates and you lose 50% of banked Sundays.'},
+    {q:'What are banked Sundays?', a:'When you hit streak milestones (7, 14, 30, 60, 90, 180, 365 days) you bank future Sunday entries. These consume one per Sunday automatically.'},
+    {q:'How are winners selected?', a:'One random ticket is drawn from all daily tickets. For weekly draws, one qualifier is selected with equal probability. All draws use provably fair cryptographic randomness.'},
+    {q:'What is the 365-day mystery prize?', a:'We can\'t reveal the amount. It grows with our user base. We\'ll reveal it at day 360 for anyone who reaches it.'},
+  ];
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">FAQ</div></div>
+  </div>` + faqs.map((f,i) => `
+    <details style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px">
+      <summary style="padding:16px;cursor:pointer;display:flex;align-items:flex-start;gap:10px;font-weight:700;list-style:none">
+        <span style="color:var(--secondary);flex-shrink:0">?</span> ${f.q}
+      </summary>
+      <div style="padding:14px 16px;font-size:13px;color:var(--muted);line-height:1.7;border-top:1px solid var(--border)">${f.a}</div>
+    </details>`).join('');
+}
+
+function renderTerms() {
+  const el = document.getElementById('terms-list');
+  if (!el) return;
+  const sections = [
+    {t:'1. Acceptance',c:'By using RafflePop you agree to these Terms. If you disagree, please stop using the app.'},
+    {t:'2. How It Works',c:'Watch 7 Monetag ads daily to earn 35 tickets automatically entered into the daily draw. Complete a 7-day streak to qualify for Sunday\'s weekly draw.'},
+    {t:'3. Prizes & Payouts',c:'Daily prizes are 50% of that day\'s ad revenue. Weekly prizes are 25% of the week\'s accumulated revenue. Minimum withdrawal is $5.'},
+    {t:'4. Streaks',c:'Streaks require opening the app AND watching 7 ads daily before midnight WAT. Missing a day auto-freezes your streak with a 24-hour heat window.'},
+    {t:'5. Eligibility',c:'Must be 18+. Not available where lottery games are prohibited by law.'},
+    {t:'6. Fair Play',c:'Manipulation, automation, or exploitation results in immediate permanent ban and prize forfeiture.'},
+    {t:'7. Liability',c:'RafflePop is provided as-is. We are not liable for indirect or consequential damages.'},
+  ];
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Terms of Service</div>
+    <div class="muted" style="font-size:12px">Last updated March 2026</div></div>
+  </div>` + sections.map(s => `
+    <div class="card" style="margin-bottom:10px">
+      <div style="font-weight:700;margin-bottom:8px;font-size:14px">${s.t}</div>
+      <p class="muted" style="font-size:13px;line-height:1.7">${s.c}</p>
+    </div>`).join('');
+}
+
+function renderPrivacy() {
+  const el = document.getElementById('privacy-list');
+  if (!el) return;
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Privacy Policy</div>
+    <div class="muted" style="font-size:12px">Last updated March 2026</div></div>
+  </div>
+  <div class="card"><div style="font-weight:700;margin-bottom:8px">What We Collect</div>
+    <p class="muted" style="font-size:13px;line-height:1.7">A randomly generated User ID stored locally. No name, email, or personal data unless you provide a payment method for withdrawals.</p></div>
+  <div class="card" style="margin-top:10px"><div style="font-weight:700;margin-bottom:8px">Ads & Third Parties</div>
+    <p class="muted" style="font-size:13px;line-height:1.7">Monetag may collect anonymised ad interaction data per their own privacy policy. We never sell your User ID.</p></div>`;
+}
+
+// ═══════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════
+async function watchAd() {
+  if (S.watchingAd) return;
+  S.watchingAd = true;
+  renderAdButton();
+
+  // Simulate ad (replace with real Monetag SDK call)
+  await new Promise(r => setTimeout(r, 3000));
+
+  const result = await api('/api/enter', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ username: USERNAME, adNetwork: 'monetag' })
+  });
+
+  S.watchingAd = false;
+
+  if (result) {
+    S.userStats.adsWatchedToday = result.adsWatched;
+    S.userStats.myTickets = (S.userStats.myTickets || 0) + 5;
+    showToast(`🎟️ +5 tickets! (${result.adsWatched}/7 ads today)`);
+    triggerConfetti('#f97316', 50);
+    if (result.streakUnlocked) showToast('🔥 Streak unlocked! Claim below.');
+  } else {
+    // Offline demo mode
+    S.userStats.adsWatchedToday = Math.min(7, (S.userStats.adsWatchedToday||0) + 1);
+    S.userStats.myTickets = (S.userStats.myTickets||0) + 5;
+    showToast(`🎟️ +5 tickets! (${S.userStats.adsWatchedToday}/7 ads today)`);
+    triggerConfetti('#f97316', 50);
+  }
+
+  renderAll();
+}
+
+async function claimStreak() {
+  const result = await api('/api/streak/claim', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ username: USERNAME })
+  });
+
+  if (result?.ok) {
+    S.userStats.streakClaimedToday = true;
+    S.streak.currentStreak = (S.streak.currentStreak || 0) + 1;
+    showToast(`🔥 Streak claimed! Day ${S.streak.currentStreak}`);
+    triggerConfetti(getStreakColor(S.streak.currentStreak), 80);
+    await fetchStreak();
+  } else if (result?.error) {
+    showToast('⚠️ ' + result.error);
+  } else {
+    // Demo mode
+    S.userStats.streakClaimedToday = true;
+    S.streak.currentStreak++;
+    showToast(`🔥 Day ${S.streak.currentStreak} streak!`);
+    triggerConfetti(getStreakColor(S.streak.currentStreak), 80);
+  }
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════
+// HEAT UP SYSTEM
+// ═══════════════════════════════════════════════
+function checkHeatWindow() {
+  if (S.streak.streakStatus === 'heat_window') {
+    showHeatPopup();
+  }
+}
+
+function showHeatPopup() {
+  const sk = S.streak;
+  const loseStreak = document.getElementById('heat-lose-streak');
+  const loseSundays = document.getElementById('heat-lose-sundays');
+  const freeRem = document.getElementById('heat-free-remaining');
+  const heatFreeBtn = document.getElementById('heat-free-btn');
+
+  if (loseStreak) loseStreak.textContent = `• Your ${sk.currentStreak}-day streak`;
+  if (loseSundays) loseSundays.textContent = `• ${Math.floor((sk.bankedSundays||0) * 0.5)} of your ${sk.bankedSundays} banked Sundays`;
+  if (freeRem) freeRem.textContent = `${sk.freeHeatsRemaining || 0} free heat${sk.freeHeatsRemaining !== 1 ? 's' : ''} remaining this month`;
+  if (heatFreeBtn) heatFreeBtn.disabled = !sk.freeHeatsRemaining;
+
+  // Start countdown timer
+  if (sk.heatWindowSecsLeft > 0) {
+    startHeatTimer(sk.heatWindowSecsLeft);
+  }
+
+  document.getElementById('heat-overlay').classList.add('show');
+}
+
+let heatTimerInterval = null;
+function startHeatTimer(secsLeft) {
+  clearInterval(heatTimerInterval);
+  let secs = secsLeft;
+  const el = document.getElementById('heat-timer');
+  const tick = () => {
+    if (!el) return;
+    const h = Math.floor(secs/3600);
+    const m = Math.floor((secs%3600)/60);
+    const s = secs % 60;
+    el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (secs <= 0) {
+      clearInterval(heatTimerInterval);
+      el.textContent = '00:00:00';
+      // Trigger liquidation
+      showLiquidation();
+      document.getElementById('heat-overlay').classList.remove('show');
+    }
+    secs--;
+  };
+  tick();
+  heatTimerInterval = setInterval(tick, 1000);
+}
+
+async function heatUpStreak() {
+  const result = await api('/api/streak/heat', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ username: USERNAME })
+  });
+
+  if (result?.ok) {
+    clearInterval(heatTimerInterval);
+    document.getElementById('heat-overlay').classList.remove('show');
+    S.streak.streakStatus = 'active';
+    S.streak.freeHeatsRemaining--;
+    showToast(`🔥 Streak saved! Back to ${result.streakRestored} days.`);
+    triggerConfetti('#f97316', 60);
+    await fetchStreak();
+    renderAll();
+  } else if (result?.canPurchase) {
+    showPurchaseOptions();
+  } else {
+    // Demo
+    document.getElementById('heat-overlay').classList.remove('show');
+    showToast('🔥 Streak saved!');
+  }
+}
+
+function showPurchaseOptions() {
+  showToast('⭐ Stars purchase coming soon!');
+}
+
+function ignoreHeat() {
+  clearInterval(heatTimerInterval);
+  document.getElementById('heat-overlay').classList.remove('show');
+  showLiquidation();
+}
+
+// ═══════════════════════════════════════════════
+// LIQUIDATION
+// ═══════════════════════════════════════════════
+function showLiquidation() {
+  const sk = S.streak;
+  const streak = sk.currentStreak || 0;
+  const sundaysBefore = sk.bankedSundays || 0;
+  const floor = sk.floor || 0;
+  const afterLoss = Math.floor(sundaysBefore * 0.5);
+  const sundaysAfter = Math.max(afterLoss, floor);
+  const sundaysLost = sundaysBefore - sundaysAfter;
+  const floorProtected = sundaysAfter === floor && afterLoss < floor;
+  const tierAnchor = sk.tierAnchor || 0;
+  const nextTarget = sk.nextTarget || 7;
+
+  // Update local state immediately
+  S.streak.currentStreak = 0;
+  S.streak.streakStatus = 'active';
+  S.streak.bankedSundays = sundaysAfter;
+  S.streak.formerLongestStreak = Math.max(streak, S.streak.formerLongestStreak || 0);
+  S.streak.tierAnchor = tierAnchor;
+  S.streak.nextTarget = nextTarget;
+
+  // Build liquidation message
+  const liqStreak = document.getElementById('liq-streak');
+  const liqSundays = document.getElementById('liq-sundays');
+  const liqText = document.getElementById('liq-text');
+  const liqExtra = document.getElementById('liq-extra');
+  const liqTitle = document.getElementById('liq-title');
+  const liqEmoji = document.getElementById('liq-emoji');
+
+  if (liqStreak) liqStreak.textContent = `${streak} days`;
+  if (liqSundays) liqSundays.textContent = sundaysAfter;
+
+  if (floorProtected) {
+    // At floor — softer message
+    if (liqEmoji) liqEmoji.textContent = '🛡️';
+    if (liqTitle) { liqTitle.textContent = 'Streak Reset'; liqTitle.style.color = 'var(--vip)'; }
+    if (liqText) liqText.textContent =
+      `Your ${streak}-day streak has reset. But your Day ${tierAnchor} milestone protects your ${floor} banked Sunday${floor !== 1 ? 's' : ''} — they can't be taken away.`;
+    if (liqExtra) liqExtra.innerHTML = `
+      <div style="background:var(--vip-dim);border:1px solid rgba(167,139,250,0.3);border-radius:12px;padding:12px;text-align:center;font-size:12px;color:var(--vip);font-weight:700">
+        🛡️ Milestone Floor Active — ${floor} Sunday${floor !== 1 ? 's' : ''} permanently protected
+      </div>`;
+  } else {
+    // Lost some Sundays
+    if (liqEmoji) liqEmoji.textContent = '❄️';
+    if (liqTitle) { liqTitle.textContent = 'Streak Melted'; liqTitle.style.color = 'var(--ice)'; }
+    if (liqText) liqText.textContent =
+      `Your ${streak}-day streak has melted. You lost ${sundaysLost} banked Sunday${sundaysLost !== 1 ? 's' : ''}. ${sundaysAfter} remain${floor > 0 ? ` (${floor} permanently protected by your Day ${tierAnchor} milestone)` : ''}.`;
+    if (liqExtra) liqExtra.innerHTML = floor > 0 ? `
+      <div style="background:rgba(103,232,249,0.06);border:1px solid rgba(103,232,249,0.15);border-radius:12px;padding:10px;text-align:center;font-size:11px;color:var(--ice)">
+        🛡️ ${floor} Sunday${floor !== 1 ? 's' : ''} permanently protected by Day ${tierAnchor} milestone
+      </div>` : '';
+  }
+
+  // Tier restart info
+  const liqRestart = document.getElementById('liq-restart');
+  if (liqRestart) {
+    if (tierAnchor > 0) {
+      liqRestart.innerHTML = `
+        <div style="background:rgba(138,51,224,0.08);border:1px solid rgba(138,51,224,0.2);border-radius:12px;padding:12px;font-size:12px">
+          <div style="color:var(--primary);font-weight:700;margin-bottom:4px">🎯 Your Restart Point</div>
+          <div class="muted">You're anchored to Day ${tierAnchor}. Rebuild ${nextTarget} days to earn +${sk.nextRewardSundays || '?'} more Sunday${sk.nextRewardSundays !== 1 ? 's' : ''}.</div>
+        </div>`;
+    } else {
+      liqRestart.innerHTML = '';
+    }
+  }
+
+  document.getElementById('liq-overlay').classList.add('show');
+  renderAll();
+}
+
+function closeLiquidation() {
+  document.getElementById('liq-overlay').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════
+// WIN POPUP
+// ═══════════════════════════════════════════════
+function checkWinPopup() {
+  const seen = JSON.parse(localStorage.getItem('rafflepop_seen_draws')||'[]');
+  const s = S.stats;
+  if (s.lastDrawWinnerUsername === USERNAME && s.lastDrawId && !seen.includes(s.lastDrawId)) {
+    document.getElementById('win-prize').textContent = `$${(s.lastDrawPrize||0).toFixed(2)}`;
+    document.getElementById('win-overlay').style.display = 'flex';
+    triggerConfetti('#f5bc0d', 120);
+  }
+}
+
+function claimPrize() {
+  document.getElementById('win-overlay').innerHTML = `<div class="win-card">
+    <div style="font-size:48px;margin-bottom:12px">✅</div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:20px;margin-bottom:10px">Prize Claimed!</h2>
+    <p class="muted" style="margin-bottom:20px;line-height:1.6">Your prize will be sent within 1–2 business days.</p>
+    <button class="btn btn-ghost" onclick="dismissWin()">Close</button>
+  </div>`;
+}
+
+function dismissWin() {
+  const seen = JSON.parse(localStorage.getItem('rafflepop_seen_draws')||'[]');
+  if (S.stats.lastDrawId) seen.push(S.stats.lastDrawId);
+  localStorage.setItem('rafflepop_seen_draws', JSON.stringify(seen));
+  document.getElementById('win-overlay').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function getStreakColor(s) {
+  if (s >= 365) return '#f5bc0d';
+  if (s >= 180) return '#f5bc0d';
+  if (s >= 90)  return '#67e8f9';
+  if (s >= 60)  return '#a78bfa';
+  if (s >= 30)  return '#22c55e';
+  if (s >= 14)  return '#eab308';
+  if (s >= 7)   return '#f59e0b';
+  return '#f97316';
+}
+
+function getTier(s) {
+  const tiers = [
+    {min:365,name:'Legend',icon:'🏆',color:'#f5bc0d'},
+    {min:180,name:'Icon',icon:'🌟',color:'#f5bc0d'},
+    {min:90,name:'Elite',icon:'💎',color:'#67e8f9'},
+    {min:60,name:'VIP',icon:'👑',color:'#a78bfa'},
+    {min:30,name:'Champion',icon:'🏅',color:'#67e8f9'},
+    {min:14,name:'Dedicated',icon:'🔥',color:'#f5bc0d'},
+    {min:7,name:'Regular',icon:'⚡',color:'#c0c0c0'},
+    {min:0,name:'Newcomer',icon:'🌱',color:'#cd853f'},
+  ];
+  return tiers.find(t => s >= t.min) || tiers[tiers.length-1];
+}
+
+// ═══════════════════════════════════════════════
+// COUNTDOWN TIMER (WAT)
+// ═══════════════════════════════════════════════
+function updateCountdown() {
+  const nowUTC = Date.now();
+  const watHours = (new Date(nowUTC).getUTCHours() + 1) % 24;
+  const watMins = new Date(nowUTC).getUTCMinutes();
+  const watSecs = new Date(nowUTC).getUTCSeconds();
+  const secsLeft = (23 - watHours) * 3600 + (59 - watMins) * 60 + (60 - watSecs);
+  const h = Math.floor(secsLeft / 3600);
+  const m = Math.floor((secsLeft % 3600) / 60);
+  const s = secsLeft % 60;
+  const fmt = n => String(n).padStart(2,'0');
+  const ht = document.getElementById('home-timer');
+  if (ht) ht.textContent = `${fmt(h)}:${fmt(m)}:${fmt(s)}`;
+}
+
+// ═══════════════════════════════════════════════
+// TOAST & CONFETTI
+// ═══════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function triggerConfetti(color='#8a33e0', count=80) {
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const colors = [color,'#ffffff','#f5bc0d','#8a33e0','#22c55e'];
+  const pieces = Array.from({length:count}, () => ({
+    x:Math.random()*canvas.width, y:-10-Math.random()*80,
+    r:Math.random()*6+3,
+    color:colors[Math.floor(Math.random()*colors.length)],
+    vx:(Math.random()-.5)*5, vy:Math.random()*4+2,
+    rot:Math.random()*360, rSpeed:(Math.random()-.5)*8,
+  }));
+  let frame;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let alive = false;
+    pieces.forEach(p => {
+      if (p.y < canvas.height+20) alive = true;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0, 1-p.y/canvas.height*1.2);
+      ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);
+      ctx.restore();
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.rSpeed; p.vy+=0.06;
+    });
+    if (alive) frame = requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  cancelAnimationFrame(frame); draw();
+}
+
+// ═══════════════════════════════════════════════
+// TMA SCROLLING FIX — Full 4-layer implementation
+// ═══════════════════════════════════════════════
+
+// LAYER 1 — Tell Telegram to expand and stop intercepting swipes
+(function initTelegram() {
+  const tg = window.Telegram?.WebApp;
+  if (!tg) return;
+
+  // Expand to full screen immediately — prevents partial height issues
+  tg.expand();
+
+  // Critical — tells Telegram not to collapse on downward swipe
+  if (typeof tg.disableVerticalSwipes === 'function') {
+    tg.disableVerticalSwipes();
+  }
+
+  // Prevent accidental close — user must confirm
+  if (typeof tg.enableClosingConfirmation === 'function') {
+    tg.enableClosingConfirmation();
+  }
+
+  // Apply Telegram's stable viewport height as CSS variable
+  // Prevents content being cut off by Telegram's chrome
+  function applyViewportHeight() {
+    const vh = tg.viewportStableHeight || window.innerHeight;
+    document.documentElement.style.setProperty('--tg-vh', vh + 'px');
+  }
+  applyViewportHeight();
+  tg.onEvent('viewportChanged', applyViewportHeight);
+})();
+
+// LAYER 2 — Block touchmove from bubbling to Telegram
+// Uses passive:false so we can call preventDefault
+document.addEventListener('touchmove', function(e) {
+  // Allow pinch-zoom (multi-touch)
+  if (e.touches.length > 1) return;
+
+  const scrollable = e.target.closest('.scroll, .overlay, .liq-overlay, .win-overlay');
+
+  // Not inside any scrollable area — block entirely
+  if (!scrollable) {
+    e.preventDefault();
+    return;
+  }
+
+  const { scrollTop, scrollHeight, clientHeight } = scrollable;
+  const atTop    = scrollTop <= 0;
+  const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+  // At boundary — block so Telegram doesn't steal the gesture
+  if (atTop || atBottom) {
+    e.preventDefault();
+  }
+  // Middle of scrollable — let it scroll naturally
+}, { passive: false });
+
+// LAYER 3 — Block pull-to-refresh on touchstart at top
+document.addEventListener('touchstart', function(e) {
+  const scrollable = e.target.closest('.scroll');
+  if (!scrollable) return;
+  if (scrollable.scrollTop <= 0) {
+    // Store touch start Y to detect downward pull
+    scrollable._touchStartY = e.touches[0].clientY;
+  }
+}, { passive: true });
+
+document.addEventListener('touchmove', function(e) {
+  const scrollable = e.target.closest('.scroll');
+  if (!scrollable || scrollable._touchStartY === undefined) return;
+  const deltaY = e.touches[0].clientY - scrollable._touchStartY;
+  // Pulling down at top of scroll — block
+  if (scrollable.scrollTop <= 0 && deltaY > 0) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+// LAYER 4 — Viewport height using Telegram's stable height variable
+// Falls back to 100dvh, then 100vh for older browsers
+document.documentElement.style.setProperty(
+  '--app-height',
+  (window.Telegram?.WebApp?.viewportStableHeight || window.innerHeight) + 'px'
+);
+window.addEventListener('resize', () => {
+  document.documentElement.style.setProperty(
+    '--app-height',
+    (window.Telegram?.WebApp?.viewportStableHeight || window.innerHeight) + 'px'
+  );
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+setInterval(updateCountdown, 1000);
+setInterval(renderWeeklyDraw, 60000);
+setInterval(async () => {
+  await Promise.all([fetchStats(), fetchUserStats(), fetchStreak()]);
+  renderAll();
+  checkHeatWindow();
+  checkWinPopup();
+}, 10000);
+
+updateCountdown();
+renderWeeklyDraw();
+init();
+</script>
+</body>
+</html>
