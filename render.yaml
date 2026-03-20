@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: rafflepop-backend
+    runtime: node
+    buildCommand: npm install -g pnpm && pnpm install --no-frozen-lockfile
+    startCommand: npx ts-node server/index.ts
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: ADMIN_SECRET
+        sync: false
+      - key: PORT
+        value: 3000
