@@ -1324,6 +1324,10 @@ app.get("/api/admin/stats", adminAuth, async (_req, res) => {
 });
 
 // ── START ─────────────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.send("Server is running 🚀");
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`RafflePop backend running on port ${PORT}`);
