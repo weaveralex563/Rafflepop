@@ -23,4 +23,8 @@
     "@types/node-cron": "^3.0.11",
     "@types/node": "^20.10.0"
   }
+},
+  "dependencies": {
+  "node-telegram-bot-api": "^0.65.1"
+  }
 }
