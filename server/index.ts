@@ -10,6 +10,7 @@
 //   BOT_TOKEN=your_telegram_bot_token (optional for now)
 // ============================================================
 
+import "../bot";
 import express from "express";
 import cors from "cors";
 import cron from "node-cron";
