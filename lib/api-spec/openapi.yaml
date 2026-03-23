@@ -2,26 +2,33 @@ openapi: 3.1.0
 info:
   title: Api
   version: 0.1.0
-  description: RafflePop API specification
+  description: AdJackpot lottery app API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
   - name: user
-    description: User operations
-  - name: raffle
-    description: Raffle operations
-  - name: draws
-    description: Draw operations
+    description: User profile and stats
+  - name: ads
+    description: Ad watching and ticket earning
+  - name: jackpot
+    description: Daily jackpot operations
+  - name: streak
+    description: Streak tracking
+  - name: referral
+    description: Referral system
+  - name: winners
+    description: Winners list
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -30,80 +37,315 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
-  /user/me:
+  /auth/user:
     get:
-      operationId: getMe
+      operationId: getCurrentAuthUser
+      tags: [auth]
+      summary: Get the currently authenticated user
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        "200":
+          description: Auth status resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetCurrentAuthUserResponse"
+
+  /login:
+    get:
+      operationId: beginBrowserLogin
+      tags: [auth]
+      summary: Start the browser OIDC login flow
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to OIDC authorization endpoint
+
+  /callback:
+    get:
+      operationId: handleBrowserLoginCallback
+      tags: [auth]
+      summary: Complete the browser OIDC login flow
+      responses:
+        "302":
+          description: Redirect after login
+
+  /logout:
+    get:
+      operationId: logoutBrowserSession
+      tags: [auth]
+      summary: Clear session and begin OIDC logout
+      responses:
+        "302":
+          description: Redirect to OIDC logout
+
+  /mobile-auth/token-exchange:
+    post:
+      operationId: exchangeMobileAuthorizationCode
+      tags: [auth]
+      summary: Exchange a mobile OIDC code for a session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExchangeMobileAuthorizationCodeBody"
+      responses:
+        "200":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeMobileAuthorizationCodeResponse"
+        "400":
+          description: Invalid request
+        "401":
+          description: Token invalid
+        "500":
+          description: Exchange failed
+
+  /mobile-auth/logout:
+    post:
+      operationId: logoutMobileSession
+      tags: [auth]
+      summary: Delete a mobile session token
+      responses:
+        "200":
+          description: Logout processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutMobileSessionResponse"
+
+  /user/profile:
+    get:
+      operationId: getUserProfile
       tags: [user]
-      summary: Get current user profile
+      summary: Get user profile with stats
       responses:
         "200":
           description: User profile
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
 
-  /user/watch-ad:
-    post:
-      operationId: watchAd
-      tags: [user]
-      summary: Watch an ad to earn a ticket
-      responses:
-        "200":
-          description: Ticket earned
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WatchAdResult"
-
-  /user/claim-streak:
-    post:
-      operationId: claimStreak
-      tags: [user]
-      summary: Claim daily streak reward
-      responses:
-        "200":
-          description: Streak claimed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ClaimStreakResult"
-
-  /raffle/stats:
+  /user/stats:
     get:
-      operationId: getRaffleStats
-      tags: [raffle]
-      summary: Get current raffle statistics
+      operationId: getUserStats
+      tags: [user]
+      summary: Get user statistics
       responses:
         "200":
-          description: Raffle stats
+          description: User stats
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RaffleStats"
+                $ref: "#/components/schemas/UserStats"
+        "401":
+          description: Not authenticated
 
-  /draws:
+  /ads/watch:
+    post:
+      operationId: recordAdWatch
+      tags: [ads]
+      summary: Record that the user watched an ad
+      responses:
+        "200":
+          description: Updated ad progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdWatchResult"
+        "400":
+          description: Already watched all 7 ads today or error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+
+  /ads/progress:
     get:
-      operationId: getDraws
-      tags: [draws]
-      summary: Get past draw winners
+      operationId: getAdProgress
+      tags: [ads]
+      summary: Get today's ad watching progress
+      responses:
+        "200":
+          description: Today's progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdProgress"
+        "401":
+          description: Not authenticated
+
+  /jackpot/daily:
+    get:
+      operationId: getDailyJackpot
+      tags: [jackpot]
+      summary: Get today's daily jackpot info
+      responses:
+        "200":
+          description: Daily jackpot info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyJackpot"
+
+  /jackpot/sunday:
+    get:
+      operationId: getSundayJackpot
+      tags: [jackpot]
+      summary: Get the upcoming Sunday jackpot info
+      responses:
+        "200":
+          description: Sunday jackpot info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SundayJackpot"
+
+  /streak:
+    get:
+      operationId: getStreak
+      tags: [streak]
+      summary: Get user streak info and roadmap milestones
+      responses:
+        "200":
+          description: Streak info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreakInfo"
+        "401":
+          description: Not authenticated
+
+  /streak/heat:
+    post:
+      operationId: heatStreak
+      tags: [streak]
+      summary: Use a heat to unfreeze a frozen streak
+      responses:
+        "200":
+          description: Streak heated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeatResult"
+        "400":
+          description: No heats available or streak not frozen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+
+  /referral/code:
+    get:
+      operationId: getReferralCode
+      tags: [referral]
+      summary: Get the user's referral code
+      responses:
+        "200":
+          description: Referral code info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralCode"
+        "401":
+          description: Not authenticated
+
+  /referral/apply:
+    post:
+      operationId: applyReferralCode
+      tags: [referral]
+      summary: Apply a referral code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplyReferralRequest"
+      responses:
+        "200":
+          description: Referral applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralResult"
+        "400":
+          description: Invalid or already used code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+
+  /winners/daily:
+    get:
+      operationId: getDailyWinners
+      tags: [winners]
+      summary: Get recent daily jackpot winners
       parameters:
         - name: limit
           in: query
-          required: false
           schema:
-            type: number
+            type: integer
+            default: 20
       responses:
         "200":
-          description: List of draws
+          description: Daily winners
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Draw"
+                $ref: "#/components/schemas/WinnersList"
+
+  /winners/sunday:
+    get:
+      operationId: getSundayWinners
+      tags: [winners]
+      summary: Get recent Sunday jackpot winners
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Sunday winners
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WinnersList"
 
 components:
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      schema:
+        type: string
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      schema:
+        type: string
   schemas:
     HealthStatus:
       type: object
@@ -113,121 +355,441 @@ components:
       required:
         - status
 
-    User:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    AuthUser:
       type: object
       properties:
         id:
           type: string
         username:
           type: string
-        tickets:
-          type: number
-        streakDays:
-          type: number
-        bestStreak:
-          type: number
-        lastStreakClaim:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        profileImage:
           type: string
           nullable: true
-        adsWatchedToday:
-          type: number
-        totalWinnings:
-          type: number
-        createdAt:
-          type: string
+        isAuthenticated:
+          type: boolean
       required:
         - id
         - username
-        - tickets
-        - streakDays
-        - bestStreak
-        - lastStreakClaim
-        - adsWatchedToday
-        - totalWinnings
-        - createdAt
+        - isAuthenticated
 
-    WatchAdResult:
+    GetCurrentAuthUserResponse:
       type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/AuthUserFull"
+            - type: "null"
+
+    AuthUserFull:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        profileImageUrl:
+          type: string
+          nullable: true
+
+    ExchangeMobileAuthorizationCodeBody:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        code_verifier:
+          type: string
+          minLength: 1
+        redirect_uri:
+          type: string
+          minLength: 1
+        state:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 1
+
+    ExchangeMobileAuthorizationCodeResponse:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    LogoutMobileSessionResponse:
+      type: object
+      required: [success]
       properties:
         success:
           type: boolean
-        tickets:
-          type: number
-        message:
-          type: string
-      required:
-        - success
-        - tickets
-        - message
 
-    ClaimStreakResult:
-      type: object
-      properties:
-        success:
-          type: boolean
-        tickets:
-          type: number
-        streakDays:
-          type: number
-        bestStreak:
-          type: number
-        message:
-          type: string
-        alreadyClaimed:
-          type: boolean
-      required:
-        - success
-        - tickets
-        - streakDays
-        - bestStreak
-        - message
-        - alreadyClaimed
-
-    RaffleStats:
-      type: object
-      properties:
-        jackpot:
-          type: number
-        totalTickets:
-          type: number
-        uniqueParticipants:
-          type: number
-        drawTime:
-          type: string
-        myTickets:
-          type: number
-        myOdds:
-          type: number
-      required:
-        - jackpot
-        - totalTickets
-        - uniqueParticipants
-        - drawTime
-        - myTickets
-        - myOdds
-
-    Draw:
+    UserProfile:
       type: object
       properties:
         id:
           type: string
-        date:
+        username:
           type: string
-        winnerUsername:
+        firstName:
           type: string
-        winnerEmoji:
+        lastName:
           type: string
-        prize:
-          type: number
-        totalTickets:
-          type: number
-        participants:
-          type: number
+        profileImage:
+          type: string
+          nullable: true
+        totalTicketsEarned:
+          type: integer
+        totalAdsWatched:
+          type: integer
+        totalReferrals:
+          type: integer
+        memberSince:
+          type: string
+          format: date-time
+        currentStreakDays:
+          type: integer
+        longestStreakDays:
+          type: integer
+        sundayQualifications:
+          type: integer
+        heatsAvailable:
+          type: integer
       required:
         - id
-        - date
-        - winnerUsername
-        - winnerEmoji
-        - prize
+        - username
+        - totalTicketsEarned
+        - totalAdsWatched
+        - totalReferrals
+        - memberSince
+        - currentStreakDays
+        - longestStreakDays
+        - sundayQualifications
+        - heatsAvailable
+
+    UserStats:
+      type: object
+      properties:
+        todayTickets:
+          type: integer
+        todayAdsWatched:
+          type: integer
+        weekTickets:
+          type: integer
+        totalTickets:
+          type: integer
+        totalReferrals:
+          type: integer
+        sundayQualifications:
+          type: integer
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+      required:
+        - todayTickets
+        - todayAdsWatched
+        - weekTickets
         - totalTickets
-        - participants
+        - totalReferrals
+        - sundayQualifications
+        - currentStreak
+        - longestStreak
+
+    AdWatchResult:
+      type: object
+      properties:
+        adsWatchedToday:
+          type: integer
+        ticketsEarned:
+          type: integer
+        totalTicketsToday:
+          type: integer
+        dailyComplete:
+          type: boolean
+        streakUpdated:
+          type: boolean
+        message:
+          type: string
+      required:
+        - adsWatchedToday
+        - ticketsEarned
+        - totalTicketsToday
+        - dailyComplete
+        - streakUpdated
+        - message
+
+    AdProgress:
+      type: object
+      properties:
+        adsWatchedToday:
+          type: integer
+        totalAdsRequired:
+          type: integer
+        ticketsFromAds:
+          type: integer
+        ticketsFromReferrals:
+          type: integer
+        totalTicketsToday:
+          type: integer
+        dailyComplete:
+          type: boolean
+        lastAdWatchedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - adsWatchedToday
+        - totalAdsRequired
+        - ticketsFromAds
+        - ticketsFromReferrals
+        - totalTicketsToday
+        - dailyComplete
+
+    DailyJackpot:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        prizeAmount:
+          type: number
+        totalParticipants:
+          type: integer
+        totalTickets:
+          type: integer
+        userTickets:
+          type: integer
+          nullable: true
+        drawTime:
+          type: string
+          format: date-time
+        isComplete:
+          type: boolean
+        winner:
+          $ref: "#/components/schemas/WinnerEntry"
+          nullable: true
+      required:
+        - date
+        - prizeAmount
+        - totalParticipants
+        - totalTickets
+        - drawTime
+        - isComplete
+
+    SundayJackpot:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        prizeAmount:
+          type: number
+        totalQualifiedUsers:
+          type: integer
+        userIsQualified:
+          type: boolean
+        userBankedSundays:
+          type: integer
+        accumulatedDays:
+          type: integer
+        drawTime:
+          type: string
+          format: date-time
+        isComplete:
+          type: boolean
+        winner:
+          $ref: "#/components/schemas/WinnerEntry"
+          nullable: true
+      required:
+        - date
+        - prizeAmount
+        - totalQualifiedUsers
+        - userIsQualified
+        - userBankedSundays
+        - accumulatedDays
+        - drawTime
+        - isComplete
+
+    StreakMilestone:
+      type: object
+      properties:
+        day:
+          type: integer
+        label:
+          type: string
+        reward:
+          type: string
+        isReached:
+          type: boolean
+        isNext:
+          type: boolean
+      required:
+        - day
+        - label
+        - reward
+        - isReached
+        - isNext
+
+    StreakInfo:
+      type: object
+      properties:
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        isFrozen:
+          type: boolean
+        frozenSinceDays:
+          type: integer
+          nullable: true
+        heatsAvailable:
+          type: integer
+        nextHeatAvailableAt:
+          type: string
+          format: date-time
+          nullable: true
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/StreakMilestone"
+        sundaysBanked:
+          type: integer
+        lastActivityDate:
+          type: string
+          format: date
+          nullable: true
+      required:
+        - currentStreak
+        - longestStreak
+        - isFrozen
+        - heatsAvailable
+        - milestones
+        - sundaysBanked
+
+    HeatResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        heatsRemaining:
+          type: integer
+        nextHeatAvailableAt:
+          type: string
+          format: date-time
+          nullable: true
+        message:
+          type: string
+      required:
+        - success
+        - heatsRemaining
+        - message
+
+    ReferralCode:
+      type: object
+      properties:
+        code:
+          type: string
+        totalReferrals:
+          type: integer
+        ticketsEarnedFromReferrals:
+          type: integer
+        referralUrl:
+          type: string
+      required:
+        - code
+        - totalReferrals
+        - ticketsEarnedFromReferrals
+        - referralUrl
+
+    ApplyReferralRequest:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+        - code
+
+    ReferralResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        ticketsAwarded:
+          type: integer
+        referrerUsername:
+          type: string
+        message:
+          type: string
+      required:
+        - success
+        - ticketsAwarded
+        - referrerUsername
+        - message
+
+    WinnerEntry:
+      type: object
+      properties:
+        userId:
+          type: string
+        username:
+          type: string
+        profileImage:
+          type: string
+          nullable: true
+        prizeAmount:
+          type: number
+        ticketsAtDraw:
+          type: integer
+          nullable: true
+        wonAt:
+          type: string
+          format: date-time
+        drawDate:
+          type: string
+          format: date
+        drawType:
+          type: string
+          enum: [daily, sunday]
+      required:
+        - userId
+        - username
+        - prizeAmount
+        - wonAt
+        - drawDate
+        - drawType
+
+    WinnersList:
+      type: object
+      properties:
+        winners:
+          type: array
+          items:
+            $ref: "#/components/schemas/WinnerEntry"
+        total:
+          type: integer
+      required:
+        - winners
+        - total

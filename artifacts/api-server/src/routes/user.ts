@@ -1,133 +1,99 @@
 import { Router, type IRouter } from "express";
-import { eq, sql } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
-import { GetMeResponse, WatchAdResponse, ClaimStreakResponse } from "@workspace/api-zod";
+import { db } from "@workspace/db";
+import { usersTable, userStatsTable, referralsTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 const router: IRouter = Router();
 
-const DEMO_USER_ID = 1;
-const DEMO_USERNAME = "User_00000";
-const EMOJIS = ["🦁", "🐯", "🦊", "🐺", "🦝", "🐻", "🦋", "🐬", "🦄", "🐉"];
-
-async function getOrCreateUser(): Promise<typeof usersTable.$inferSelect> {
-  const existing = await db.select().from(usersTable).where(eq(usersTable.id, DEMO_USER_ID)).limit(1);
-  if (existing.length > 0) {
-    return existing[0];
+async function ensureUserStats(userId: string) {
+  const existing = await db.query.userStatsTable.findFirst({
+    where: eq(userStatsTable.userId, userId),
+  });
+  if (!existing) {
+    const referralCode = nanoid(8).toUpperCase();
+    await db.insert(userStatsTable).values({
+      userId,
+      referralCode,
+      heatsAvailable: 1,
+    });
+    return await db.query.userStatsTable.findFirst({
+      where: eq(userStatsTable.userId, userId),
+    });
   }
-  const [user] = await db.insert(usersTable).values({
-    username: DEMO_USERNAME,
-    tickets: 0,
-    streakDays: 0,
-    bestStreak: 0,
-    adsWatchedToday: 0,
-    totalWinnings: 0,
-  }).returning();
-  return user;
+  return existing;
 }
 
-function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function isNewDay(lastDate: string | null | undefined): boolean {
-  if (!lastDate) return true;
-  return lastDate !== todayStr();
-}
-
-router.get("/user/me", async (_req, res): Promise<void> => {
-  const user = await getOrCreateUser();
-  
-  if (isNewDay(user.lastAdWatchDate)) {
-    await db.update(usersTable).set({ adsWatchedToday: 0, lastAdWatchDate: todayStr() }).where(eq(usersTable.id, DEMO_USER_ID));
-    user.adsWatchedToday = 0;
-  }
-
-  res.json(GetMeResponse.parse({
-    id: String(user.id),
-    username: user.username,
-    tickets: user.tickets,
-    streakDays: user.streakDays,
-    bestStreak: user.bestStreak,
-    lastStreakClaim: user.lastStreakClaim ? user.lastStreakClaim.toISOString() : null,
-    adsWatchedToday: user.adsWatchedToday,
-    totalWinnings: user.totalWinnings,
-    createdAt: user.createdAt.toISOString(),
-  }));
-});
-
-router.post("/user/watch-ad", async (_req, res): Promise<void> => {
-  const user = await getOrCreateUser();
-
-  if (isNewDay(user.lastAdWatchDate)) {
-    await db.update(usersTable).set({ adsWatchedToday: 0, lastAdWatchDate: todayStr() }).where(eq(usersTable.id, DEMO_USER_ID));
-    user.adsWatchedToday = 0;
-  }
-
-  const [updated] = await db.update(usersTable)
-    .set({
-      tickets: sql`${usersTable.tickets} + 1`,
-      adsWatchedToday: sql`${usersTable.adsWatchedToday} + 1`,
-      lastAdWatchDate: todayStr(),
-    })
-    .where(eq(usersTable.id, DEMO_USER_ID))
-    .returning();
-
-  res.json(WatchAdResponse.parse({
-    success: true,
-    tickets: updated.tickets,
-    message: "You earned 1 ticket!",
-  }));
-});
-
-router.post("/user/claim-streak", async (_req, res): Promise<void> => {
-  const user = await getOrCreateUser();
-  const today = todayStr();
-
-  const lastClaim = user.lastStreakClaim;
-  const lastClaimStr = lastClaim ? lastClaim.toISOString().slice(0, 10) : null;
-  
-  if (lastClaimStr === today) {
-    res.json(ClaimStreakResponse.parse({
-      success: false,
-      tickets: user.tickets,
-      streakDays: user.streakDays,
-      bestStreak: user.bestStreak,
-      message: "You already claimed your streak today!",
-      alreadyClaimed: true,
-    }));
+router.get("/user/profile", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
     return;
   }
+  const user = req.user;
+  const stats = await ensureUserStats(user.id);
 
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+  res.json({
+    id: user.id,
+    username: user.username,
+    firstName: user.firstName ?? "",
+    lastName: user.lastName ?? "",
+    profileImage: user.profileImage ?? null,
+    totalTicketsEarned: stats!.totalTicketsEarned,
+    totalAdsWatched: stats!.totalAdsWatched,
+    totalReferrals: stats!.totalReferrals,
+    memberSince: user.createdAt,
+    currentStreakDays: stats!.currentStreakDays,
+    longestStreakDays: stats!.longestStreakDays,
+    sundayQualifications: stats!.sundayQualifications,
+    heatsAvailable: stats!.heatsAvailable,
+  });
+});
 
-  let newStreak = (lastClaimStr === yesterdayStr) ? user.streakDays + 1 : 1;
-  const newBestStreak = Math.max(newStreak, user.bestStreak);
+router.get("/user/stats", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const user = req.user;
+  const stats = await ensureUserStats(user.id);
 
-  let bonusTickets = 10;
-  if (newStreak === 3) bonusTickets = 30;
-  else if (newStreak === 7) bonusTickets = 70;
-  else if (newStreak === 30) bonusTickets = 300;
+  const today = new Date().toISOString().split("T")[0];
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-  const [updated] = await db.update(usersTable)
-    .set({
-      tickets: sql`${usersTable.tickets} + ${bonusTickets}`,
-      streakDays: newStreak,
-      bestStreak: newBestStreak,
-      lastStreakClaim: new Date(),
-    })
-    .where(eq(usersTable.id, DEMO_USER_ID))
-    .returning();
+  const { dailyActivityTable } = await import("@workspace/db");
+  const { gte, and } = await import("drizzle-orm");
 
-  res.json(ClaimStreakResponse.parse({
-    success: true,
-    tickets: updated.tickets,
-    streakDays: updated.streakDays,
-    bestStreak: updated.bestStreak,
-    message: `Streak claimed! +${bonusTickets} tickets. ${newStreak} day streak!`,
-    alreadyClaimed: false,
-  }));
+  const todayActivity = await db.query.dailyActivityTable.findFirst({
+    where: and(
+      eq(dailyActivityTable.userId, user.id),
+      eq(dailyActivityTable.activityDate, today)
+    ),
+  });
+
+  const weekActivities = await db.query.dailyActivityTable.findMany({
+    where: and(
+      eq(dailyActivityTable.userId, user.id),
+      gte(dailyActivityTable.activityDate, weekAgo)
+    ),
+  });
+
+  const weekTickets = weekActivities.reduce(
+    (sum, a) => sum + a.ticketsFromAds + a.ticketsFromReferrals,
+    0
+  );
+
+  res.json({
+    todayTickets: todayActivity
+      ? todayActivity.ticketsFromAds + todayActivity.ticketsFromReferrals
+      : 0,
+    todayAdsWatched: todayActivity?.adsWatched ?? 0,
+    weekTickets,
+    totalTickets: stats!.totalTicketsEarned,
+    totalReferrals: stats!.totalReferrals,
+    sundayQualifications: stats!.sundayQualifications,
+    currentStreak: stats!.currentStreakDays,
+    longestStreak: stats!.longestStreakDays,
+  });
 });
 
 export default router;

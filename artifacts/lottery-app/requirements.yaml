@@ -1,0 +1,19 @@
+packages:
+  "framer-motion": "For premium page transitions, animated progress bars, and glowing card effects"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes without style conflicts"
+  "date-fns": "For formatting jackpot draw times and streak dates elegantly"
+  "canvas-confetti": "For visual celebration when user completes 7/7 daily ads"
+  "@types/canvas-confetti": "Types for canvas-confetti"
+
+images:
+  - path: "artifacts/lottery-app/public/images/noise-texture.png"
+    description: "A very subtle, dark, seamless noise/grain texture to overlay on the background for an editorial paper feel, mostly transparent."
+    aspect_ratio: "16:9"
+  - path: "artifacts/lottery-app/public/images/gold-ticket.png"
+    description: "A 3D, glowing, premium golden lottery ticket icon, high resolution, dark background isolated."
+    aspect_ratio: "1:1"
+
+notes:
+  - Expects @workspace/replit-auth-web to be available for authentication.
+  - Expects @workspace/api-client-react to be available for all data fetching.
