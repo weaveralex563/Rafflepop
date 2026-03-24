@@ -19,5 +19,17 @@ bot.onText(/\/start (.+)?/, async (msg: any, match: any) => {
     }),
   });
 
-  bot.sendMessage(msg.chat.id, "Welcome to RafflePop 🎰");
+  bot.sendMessage(msg.chat.id, "Welcome to RafflePop 🎰", {
+  reply_markup: {
+    inline_keyboard: [
+      [
+        {
+          text: "🎰 Open RafflePop",
+          web_app: {
+            url: "https://rafflepop.onrender.com"
+          }
+        }
+      ]
+    ]
+  }
 });
