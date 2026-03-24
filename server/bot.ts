@@ -1,32 +1,31 @@
 import TelegramBot from "node-telegram-bot-api";
 
-// ✅ Your bot token from BotFather
+// ✅ Initialize bot
 const bot = new TelegramBot(process.env.BOT_TOKEN as string, {
   polling: true,
 });
 
-// ✅ IMPORTANT: put your Render backend URL here
-const BACKEND_URL = "https://rafflepop.onrender.com"; 
-// 🔁 REPLACE with your real Render URL
+// ✅ Put your backend URL here (IMPORTANT)
+const BACKEND_URL = "https://rafflepop.onrender.com"; // 🔁 CHANGE THIS
 
-bot.onText(/\/start (.+)?/, async (msg) => {
+bot.onText(/\/start/, async (msg) => {
   try {
     const telegramId = msg.from?.id;
     const username = msg.from?.username || `tg_${telegramId}`;
 
-    // ✅ Send user to backend
-    await fetch(`${https://rafflepop.onrender.com}/api/auth`, {
+    // ✅ Correct fetch (THIS was your main error)
+    await fetch(`${BACKEND_URL}/api/auth`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         telegram_id: telegramId,
-        username,
+        username: username,
       }),
     });
 
-    // ✅ Send button to open your frontend (Vercel)
+    // ✅ Send button to open your app
     await bot.sendMessage(msg.chat.id, "Welcome to RafflePop 🎰", {
       reply_markup: {
         inline_keyboard: [
@@ -34,14 +33,14 @@ bot.onText(/\/start (.+)?/, async (msg) => {
             {
               text: "🎰 Open RafflePop",
               web_app: {
-                url: "https://rafflepop.vercel.app", // 🔁 REPLACE THIS
+                url: "https://rafflepop.vercel.app/", // 🔁 CHANGE THIS
               },
             },
           ],
         ],
       },
     });
-  } catch (err) {
-    console.error("BOT ERROR:", err);
+  } catch (error) {
+    console.error("BOT ERROR:", error);
   }
 });
