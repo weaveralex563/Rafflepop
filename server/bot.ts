@@ -33,3 +33,4 @@ bot.onText(/\/start (.+)?/, async (msg: any, match: any) => {
     ]
   }
 });
+}
