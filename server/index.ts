@@ -17,6 +17,7 @@ import cron from "node-cron";
 import { createClient } from "@supabase/supabase-js";
 import rateLimit from "express-rate-limit";
 import crypto from "crypto";
+import * as https from "https";
 
 const app = express();
 
