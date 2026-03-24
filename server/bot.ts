@@ -1,20 +1,19 @@
-import TelegramBot from "node-telegram-bot-api";
-import * as https from "https";
+import TelegramBot, { Message } from "node-telegram-bot-api";
+import fetch from "node-fetch";
 
 // ✅ Initialize bot
 const bot = new TelegramBot(process.env.BOT_TOKEN as string, {
   polling: true,
 });
 
-// ✅ Put your backend URL here (IMPORTANT)
-const BACKEND_URL = "https://rafflepop.onrender.com"; // 🔁 CHANGE THIS
+// ✅ Backend URL
+const BACKEND_URL = "https://rafflepop.onrender.com";
 
-bot.onText(/\/start/, async (msg) => {
+bot.onText(/\/start/, async (msg: Message) => {
   try {
     const telegramId = msg.from?.id;
     const username = msg.from?.username || `tg_${telegramId}`;
 
-    // ✅ Correct fetch (THIS was your main error)
     await fetch(`${BACKEND_URL}/api/auth`, {
       method: "POST",
       headers: {
@@ -26,7 +25,6 @@ bot.onText(/\/start/, async (msg) => {
       }),
     });
 
-    // ✅ Send button to open your app
     await bot.sendMessage(msg.chat.id, "Welcome to RafflePop 🎰", {
       reply_markup: {
         inline_keyboard: [
@@ -34,7 +32,7 @@ bot.onText(/\/start/, async (msg) => {
             {
               text: "🎰 Open RafflePop",
               web_app: {
-                url: "https://rafflepop.vercel.app/", // 🔁 CHANGE THIS
+                url: "https://rafflepop.vercel.app/",
               },
             },
           ],
