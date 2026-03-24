@@ -1,4 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
+import * as https from "https";
 
 // ✅ Initialize bot
 const bot = new TelegramBot(process.env.BOT_TOKEN as string, {
