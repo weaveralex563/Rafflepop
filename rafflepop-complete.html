@@ -611,7 +611,9 @@ function getUsername() {
   if (!u) { u = `User_${Math.floor(10000 + Math.random() * 90000)}`; localStorage.setItem('rafflepop_username', u); }
   return u;
 }
-const USERNAME = getUsername();
+const tgUser = getTelegramUser();
+const USER_ID = tgUser.id;
+const USERNAME = tgUser.username || tgUser.first_name;
 
 function todayKey() { return new Date().toISOString().split('T')[0]; }
 
