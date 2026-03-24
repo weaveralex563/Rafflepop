@@ -1,5 +1,4 @@
 import TelegramBot from "node-telegram-bot-api";
-import fetch from "node-fetch";
 
 type Message = TelegramBot.Message;
 
