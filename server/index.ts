@@ -19,7 +19,15 @@ import rateLimit from "express-rate-limit";
 import crypto from "crypto";
 
 const app = express();
-app.use(cors());
+
+// 1. Configure CORS with your specific Vercel URL
+app.use(cors({
+  origin: 'https://rafflepop.vercel.app', // <-- Place your Vercel URL here
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
+// 2. Body parser (Keep this AFTER cors)
 app.use(express.json());
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
