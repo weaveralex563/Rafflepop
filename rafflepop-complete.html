@@ -590,6 +590,19 @@ const MILESTONE_DAYS = [7,14,30,60,90,180,365];
 
 function var_secondary() { return '#f5bc0d'; }
 
+function getTelegramUser() {
+  const tg = window.Telegram?.WebApp;
+
+  if (tg && tg.initDataUnsafe?.user) {
+    return tg.initDataUnsafe.user;
+  }
+
+  // fallback for testing in browser
+  return {
+    id: 'test_user_123',
+    username: 'TestUser'
+  };
+  
 // ═══════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════
