@@ -1,12 +1,13 @@
-import TelegramBot, { Message } from "node-telegram-bot-api";
+import TelegramBot from "node-telegram-bot-api";
 import fetch from "node-fetch";
+
+type Message = TelegramBot.Message;
 
 // ✅ Initialize bot
 const bot = new TelegramBot(process.env.BOT_TOKEN as string, {
   polling: true,
 });
 
-// ✅ Backend URL
 const BACKEND_URL = "https://rafflepop.onrender.com";
 
 bot.onText(/\/start/, async (msg: Message) => {
