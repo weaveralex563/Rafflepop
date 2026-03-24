@@ -22,9 +22,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+  console.error("❌ MISSING SUPABASE CREDENTIALS IN ENV VARIABLES");
+  process.exit(1); 
+}
+
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_KEY!
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
 );
 
 // ============================================================
