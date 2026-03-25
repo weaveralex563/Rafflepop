@@ -606,7 +606,7 @@ function getTelegramUser() {
     id: 'test_user_123',
     username: 'TestUser'
   };
-  
+}  
 // ═══════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════
@@ -1954,26 +1954,6 @@ setInterval(async () => {
 updateCountdown();
 updateSundayBigTimer();
 init();
-  
-const tg = window.Telegram.WebApp;
-const user = tg.initDataUnsafe.user;
-
-async function authUser() {
-  if (!user) return;
-
-  await fetch("https://your-render-url.onrender.com/api/auth", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      telegram_id: user.id,
-      username: user.username
-    })
-  });
-}
-
-authUser();
   
 </script>
 </body>
