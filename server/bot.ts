@@ -1,19 +1,19 @@
 import TelegramBot from "node-telegram-bot-api";
 
-type Message = TelegramBot.Message;
-
 // ✅ Initialize bot
 const bot = new TelegramBot(process.env.BOT_TOKEN as string, {
   polling: true,
 });
 
+// ✅ Backend URL
 const BACKEND_URL = "https://rafflepop.onrender.com";
 
-bot.onText(/\/start/, async (msg: Message) => {
+bot.onText(/\/start/, async (msg: any) => {
   try {
     const telegramId = msg.from?.id;
     const username = msg.from?.username || `tg_${telegramId}`;
 
+    // ✅ Send user to backend
     await fetch(`${BACKEND_URL}/api/auth`, {
       method: "POST",
       headers: {
@@ -25,6 +25,7 @@ bot.onText(/\/start/, async (msg: Message) => {
       }),
     });
 
+    // ✅ Send Telegram button
     await bot.sendMessage(msg.chat.id, "Welcome to RafflePop 🎰", {
       reply_markup: {
         inline_keyboard: [
