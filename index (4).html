@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="format-detection" content="telephone=no"/>
+<title>RafflePop — Watch to Win</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0612;--card:#120d1f;--card2:#1a1330;
+  --primary:#8a33e0;--primary-dim:rgba(138,51,224,0.15);
+  --secondary:#f5bc0d;--secondary-dim:rgba(245,188,13,0.15);
+  --muted:#6b7280;--border:rgba(255,255,255,0.07);--text:#fff;
+  --fire:#f97316;--fire2:#f59e0b;
+  --ice:#67e8f9;--ice-dim:rgba(103,232,249,0.12);
+  --vip:#a78bfa;--vip-dim:rgba(167,139,250,0.12);
+  --green:#22c55e;
+}
+html{overflow:hidden;position:fixed;width:100%;height:100%;overscroll-behavior:none;-webkit-overflow-scrolling:touch;height:var(--tg-vh, var(--app-height, 100dvh));}
+body{overflow:hidden;position:fixed;width:100%;height:100%;overscroll-behavior:none;touch-action:pan-y;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+.app{display:flex;flex-direction:column;height:var(--tg-vh, var(--app-height, 100dvh));max-width:480px;margin:0 auto;position:relative;overflow:hidden;}
+.glow{position:fixed;top:-100px;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(138,51,224,0.1),transparent 70%);border-radius:50%;pointer-events:none;z-index:0}
+
+/* PAGES */
+.page{display:none;flex:1;flex-direction:column;overflow:auto;position:relative;z-index:1}
+.page.active{display:flex}
+/* scroll — the main scrollable container inside each page */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;padding:16px 16px 100px;display:flex;flex-direction:column;gap:14px;position:relative;min-height:0;}
+.scroll::-webkit-scrollbar{display:none}
+
+/* STICKY HEADER for pages with fixed top + scrollable content */
+.sticky-header{flex-shrink:0;background:var(--bg);padding:20px 16px 12px;z-index:10;border-bottom:1px solid rgba(255,255,255,0.04);}
+.sticky-header-banked{flex-shrink:0;background:var(--bg);padding:20px 16px 12px;z-index:10;border-bottom:1px solid rgba(255,255,255,0.04);}
+
+/* NAV */
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:100;padding:8px 16px 16px;background:linear-gradient(to top,var(--bg) 60%,transparent)}
+.nav-inner{background:rgba(18,13,31,0.95);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:999px;padding:6px;display:flex;align-items:center;justify-content:space-around}
+.nav-btn{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;padding:10px 4px;border-radius:999px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:all .25s;position:relative;}
+.nav-btn.active{background:var(--primary);color:#fff;box-shadow:0 4px 20px rgba(138,51,224,0.4)}
+.nav-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* Badge on nav button */
+.nav-badge{position:absolute;top:4px;right:8px;background:#ef4444;color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px}
+.label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted);font-size:13px}
+
+/* BUTTONS */
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--primary),#6a1fc0);color:#fff;box-shadow:0 4px 20px rgba(138,51,224,0.3)}
+.btn-gold{background:linear-gradient(135deg,var(--secondary),#f59e0b);color:#000}
+.btn-ghost{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border)}
+.btn-fire{background:linear-gradient(135deg,var(--fire),var(--fire2));color:#000}
+.btn-ice{background:linear-gradient(135deg,#0ea5e9,#67e8f9);color:#000}
+.btn-danger{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3)}
+
+/* JACKPOT */
+.jackpot-amount{font-family:'Syne',sans-serif;font-size:64px;font-weight:800;line-height:1;background:linear-gradient(135deg,#fff 0%,var(--secondary) 60%,#f59e0b 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* AD BUTTONS */
+.ad-card{border-radius:20px;padding:16px;position:relative;overflow:visible;border:1px solid}
+.ad-card.monetag{background:linear-gradient(135deg,rgba(249,115,22,0.12),rgba(249,115,22,0.04));border-color:rgba(249,115,22,0.25);border-radius:20px}
+.ad-glow{position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;filter:blur(40px);pointer-events:none}
+.monetag .ad-glow{background:rgba(249,115,22,0.2)}
+.ad-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ad-network{display:flex;align-items:center;gap:7px}
+.ad-dot{width:8px;height:8px;border-radius:50%;background:var(--fire)}
+.ad-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--fire)}
+.ad-count{font-size:12px;font-weight:700;color:var(--fire)}
+
+/* AD PROGRESS BAR */
+.ad-progress-track{height:6px;background:rgba(255,255,255,0.05);border-radius:999px;overflow:hidden;margin-bottom:12px}
+.ad-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--fire),var(--fire2));transition:width .3s ease}
+
+/* STREAK DOTS */
+.dots-row{display:flex;justify-content:space-between;gap:3px;margin:12px 0}
+.dot-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.s-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1.5px solid var(--border);color:var(--muted);transition:all .3s}
+.s-dot.filled{background:linear-gradient(135deg,var(--fire),var(--fire2));border-color:var(--fire);color:#000;box-shadow:0 0 10px rgba(249,115,22,0.35)}
+.s-dot.frozen{background:var(--ice-dim);border-color:var(--ice);color:var(--ice)}
+.s-dot.today-empty{border-color:var(--fire);color:var(--fire);background:rgba(249,115,22,0.08)}
+.dot-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.dot-today-lbl{color:var(--fire)}
+
+/* HEAT POPUP */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.show{opacity:1;pointer-events:all}
+.popup{background:linear-gradient(135deg,#1a0a3c,#0f0920);border:1px solid;border-radius:26px;padding:28px 22px;text-align:center;max-width:340px;width:100%;position:relative;transform:scale(.85);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.overlay.show .popup{transform:scale(1)}
+.popup-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:28px;height:28px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px}
+
+/* LIQUIDATION */
+.liq-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);z-index:210;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .5s}
+.liq-overlay.show{opacity:1;pointer-events:all}
+.liq-card{background:linear-gradient(135deg,#0a0612,#0f0920);border:1px solid rgba(103,232,249,0.3);border-radius:26px;padding:32px 24px;text-align:center;max-width:340px;width:100%}
+
+/* WIN POPUP */
+.win-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:20px;display:none}
+.win-card{background:linear-gradient(135deg,#1a0a3c,#170d30,#0f0920);border:1px solid rgba(245,188,13,0.35);border-radius:28px;padding:32px 24px;text-align:center;max-width:340px;width:100%;position:relative}
+
+/* PROGRESS */
+.progress-track{height:6px;background:rgba(255,255,255,0.05);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;border-radius:999px;transition:width .8s cubic-bezier(.34,1.56,.64,1)}
+
+/* WEEKLY DRAW CARD */
+.weekly-card{background:linear-gradient(135deg,rgba(167,139,250,0.12),rgba(138,51,224,0.06));border:1px solid rgba(167,139,250,0.25);border-radius:18px;padding:18px}
+
+/* SUNDAY ENTRIES BADGE */
+.sunday-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:var(--vip-dim);border:1px solid rgba(167,139,250,0.3);font-size:12px;font-weight:700;color:var(--vip)}
+
+/* MILESTONE TEASER */
+.mystery-card{background:linear-gradient(135deg,rgba(245,188,13,0.08),rgba(138,51,224,0.08));border:1px dashed rgba(245,188,13,0.3);border-radius:18px;padding:18px;text-align:center}
+
+/* SPINNER */
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* COUNTDOWN */
+.countdown-row{display:flex;align-items:center;justify-content:center;gap:8px}
+.cd-unit{text-align:center}
+.cd-num{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;background:var(--card2);border-radius:8px;padding:6px 10px;display:block;min-width:44px}
+.cd-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:3px}
+.cd-sep{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:rgba(138,51,224,0.4);margin-bottom:14px}
+
+/* TOAST */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:10px 20px;border-radius:999px;font-size:13px;font-weight:700;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* MENU ITEM */
+.menu-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s}
+.menu-item:hover{border-color:rgba(138,51,224,0.4);background:rgba(255,255,255,0.03)}
+.menu-icon{width:40px;height:40px;border-radius:50%;background:var(--primary-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes melt{0%{opacity:1;transform:scale(1)}50%{transform:scale(1.1)}100%{opacity:0;transform:scale(0.3) translateY(20px)}}
+@keyframes freeze{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(180deg) brightness(1.5)}}
+.fade-up{animation:fadeUp .3s ease both}
+
+/* FIRE BUTTON PULSE */
+@keyframes fire-pulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,0.5),0 0 0 0 rgba(249,115,22,0.3)}70%{box-shadow:0 0 0 10px rgba(249,115,22,0),0 0 0 6px rgba(249,115,22,0)}}
+.fire-pulse{animation:fire-pulse 1.6s infinite}
+
+/* ═══ FIRE BURNING ANIMATION ═══ */
+@keyframes flame-flicker{
+  0%,100%{transform:scaleY(1) scaleX(1) rotate(-1deg);filter:hue-rotate(0deg) brightness(1);}
+  20%{transform:scaleY(1.08) scaleX(0.96) rotate(1deg);filter:hue-rotate(5deg) brightness(1.1);}
+  40%{transform:scaleY(0.96) scaleX(1.04) rotate(-2deg);filter:hue-rotate(-5deg) brightness(0.95);}
+  60%{transform:scaleY(1.05) scaleX(0.97) rotate(2deg);filter:hue-rotate(8deg) brightness(1.05);}
+  80%{transform:scaleY(0.98) scaleX(1.02) rotate(-1deg);filter:hue-rotate(3deg) brightness(1.08);}
+}
+@keyframes ember-rise{
+  0%{opacity:0;transform:translateY(0) scale(1);}
+  20%{opacity:1;}
+  100%{opacity:0;transform:translateY(-18px) scale(0.3) translateX(4px);}
+}
+.fire-emoji-wrap{position:relative;display:inline-block;}
+.fire-emoji-wrap .flame{display:inline-block;animation:flame-flicker 0.9s ease-in-out infinite;transform-origin:bottom center;font-size:20px;}
+.fire-emoji-wrap .ember{position:absolute;top:-4px;left:50%;font-size:7px;animation:ember-rise 1.4s ease-out infinite;pointer-events:none;}
+.fire-emoji-wrap .ember:nth-child(2){animation-delay:.45s;left:35%;}
+.fire-emoji-wrap .ember:nth-child(3){animation-delay:.9s;left:62%;}
+
+/* ═══ REFERRAL PULSE ═══ */
+@keyframes referral-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(138,51,224,0.6),0 4px 20px rgba(138,51,224,0.35);}
+  50%{box-shadow:0 0 0 8px rgba(138,51,224,0),0 4px 20px rgba(138,51,224,0.35);}
+}
+.referral-pulse{animation:referral-pulse 2s ease-in-out infinite;}
+
+/* ═══ FAQ ACCORDION ═══ */
+.faq-item{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px;}
+.faq-q{padding:16px;cursor:pointer;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;font-weight:700;font-size:14px;list-style:none;-webkit-user-select:none;user-select:none;}
+.faq-q::-webkit-details-marker{display:none;}
+.faq-chevron{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:10px;transition:transform .25s;margin-top:1px;}
+details[open] .faq-chevron{transform:rotate(180deg);}
+.faq-a{padding:0 16px 16px;font-size:13px;color:var(--muted);line-height:1.7;border-top:1px solid var(--border);padding-top:12px;}
+
+/* ═══ CONTACT FORM ═══ */
+.contact-form{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.contact-textarea{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;padding:14px;resize:none;outline:none;transition:border-color .2s;min-height:140px;}
+.contact-textarea:focus{border-color:rgba(138,51,224,0.5);}
+.contact-sent-popup{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);z-index:250;align-items:center;justify-content:center;padding:20px;display:none;}
+.contact-sent-card{background:linear-gradient(135deg,#1a0a3c,#0f0920);border:1px solid rgba(138,51,224,0.4);border-radius:24px;padding:36px 28px;text-align:center;max-width:300px;width:100%;}
+
+/* ═══ CONTACT RESPONSE THREAD ═══ */
+.response-bubble{border-radius:14px;padding:12px 14px;margin-bottom:8px;font-size:13px;line-height:1.6;}
+.response-bubble.admin{background:rgba(138,51,224,0.15);border:1px solid rgba(138,51,224,0.3);color:#fff;}
+.response-bubble.user-msg{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);}
+
+/* STREAK FULL-PAGE POPUP */
+.streak-popup{position:fixed;inset:0;background:var(--bg);z-index:250;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .38s cubic-bezier(.32,0,.67,0)}
+.streak-popup.open{transform:translateY(0);transition:transform .38s cubic-bezier(.33,1,.68,1)}
+.streak-popup-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:24px 16px 60px;display:flex;flex-direction:column;gap:16px;min-height:0;}
+.streak-popup-scroll::-webkit-scrollbar{display:none}
+
+canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:150}
+
+/* TROPHY ICON SVG */
+.trophy-svg{display:inline-block;vertical-align:middle;}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="toast" id="toast"></div>
+
+<!-- ══ HEAT UP POPUP ══ -->
+<div class="overlay" id="heat-overlay">
+  <div class="popup" style="border-color:rgba(249,115,22,0.4)">
+    <button class="popup-close" onclick="ignoreHeat()">✕</button>
+    <div style="font-size:56px;margin-bottom:10px" id="heat-emoji">🧊</div>
+    <h2 style="font-size:20px;margin-bottom:6px">Your streak is frozen!</h2>
+    <p class="muted" style="margin-bottom:6px">You missed yesterday's 7-ad requirement.</p>
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:12px;margin:14px 0;font-size:13px">
+      If you don't heat up your streak you'll lose:<br/>
+      <strong style="color:#f87171" id="heat-lose-streak">• Your X-day streak</strong><br/>
+      <strong style="color:#f87171" id="heat-lose-sundays">• X banked Sundays</strong>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px">
+      ⏰ Heat window expires in <strong style="color:var(--fire)" id="heat-timer">23:59:59</strong>
+    </div>
+    <button class="btn btn-fire" style="margin-bottom:10px" onclick="heatUpStreak()" id="heat-free-btn">
+      🔥 Heat Up — Use Free Heat
+    </button>
+    <button class="btn btn-ghost" style="font-size:13px;margin-bottom:10px" onclick="showPurchaseOptions()">
+      ⭐ Buy Heat — 50 Stars (3 heats)
+    </button>
+    <button class="btn btn-danger" style="font-size:12px" onclick="ignoreHeat()">
+      Let streak reset →
+    </button>
+    <p style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:10px" id="heat-free-remaining">1 free heat remaining this month</p>
+  </div>
+</div>
+
+<!-- ══ LIQUIDATION OVERLAY ══ -->
+<div class="liq-overlay" id="liq-overlay">
+  <div class="liq-card">
+    <div style="font-size:64px;margin-bottom:12px" id="liq-emoji">❄️</div>
+    <h2 style="font-size:22px;font-family:'Syne',sans-serif;margin-bottom:8px" id="liq-title" style="color:var(--ice)">Streak Melted</h2>
+    <p class="muted" style="margin-bottom:16px;line-height:1.6" id="liq-text">Your streak has melted.</p>
+    <div style="background:rgba(103,232,249,0.05);border:1px solid rgba(103,232,249,0.15);border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+        <span class="muted">Streak lost</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--ice)" id="liq-streak">0 days</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+        <span class="muted">Banked Sundays remaining</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--vip)" id="liq-sundays">0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px">
+        <span class="muted">Badges kept</span>
+        <span style="color:var(--green)">✓ All badges kept</span>
+      </div>
+    </div>
+    <div id="liq-extra" style="margin-bottom:12px"></div>
+    <div id="liq-restart" style="margin-bottom:16px"></div>
+    <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:20px;font-style:italic">"Every legend started at day 1."</p>
+    <button class="btn btn-primary" onclick="closeLiquidation()">Start New Streak →</button>
+  </div>
+</div>
+
+<!-- ══ WIN POPUP ══ -->
+<div class="win-overlay" id="win-overlay">
+  <div class="win-card">
+    <button class="popup-close" onclick="dismissWin()" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:28px;height:28px;color:#fff;cursor:pointer;position:absolute;top:14px;right:14px">✕</button>
+    <div style="font-size:72px;margin-bottom:12px">
+      <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#f5bc0d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+        <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+      </svg>
+    </div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:24px;margin-bottom:6px">You Won!</h2>
+    <p class="muted" style="margin-bottom:16px">Today's lucky winner!</p>
+    <div style="background:var(--secondary-dim);border:1px solid rgba(245,188,13,0.3);border-radius:14px;padding:16px;margin-bottom:16px">
+      <div class="label" style="color:var(--secondary);margin-bottom:4px">Prize Won</div>
+      <div class="jackpot-amount" style="font-size:48px" id="win-prize">$0</div>
+    </div>
+    <button class="btn btn-gold" onclick="claimPrize()">Claim Prize 🎉</button>
+  </div>
+</div>
+
+<!-- ══ CONTACT SENT POPUP ══ -->
+<div class="contact-sent-popup" id="contact-sent-popup">
+  <div class="contact-sent-card">
+    <div style="font-size:56px;margin-bottom:16px">✅</div>
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px">Sent!</div>
+    <p class="muted" style="margin-bottom:24px;font-size:13px;line-height:1.6">Your message has been received. We'll get back to you soon.</p>
+    <button onclick="closeContactSent()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:10px 28px;border-radius:12px;font-family:'DM Sans',sans-serif;font-weight:700;cursor:pointer;font-size:14px">✕ Close</button>
+  </div>
+</div>
+
+<div class="app">
+  <div class="glow"></div>
+
+  <!-- ══════════ HOME ══════════ -->
+  <div class="page active" id="page-home">
+    <div style="flex:1;display:flex;flex-direction:column;padding:16px 16px 100px;gap:14px;overflow:hidden;">
+
+      <!-- Header -->
+      <header style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--primary),#5b1fa8);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(138,51,224,0.4)">🎱</div>
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;line-height:1">RafflePop</div>
+            <div style="font-size:11px;color:var(--muted)">Watch to Play</div>
+          </div>
+        </div>
+        <!-- Animated fire button -->
+        <button id="fire-btn" onclick="openStreakPopup()" style="background:rgba(249,115,22,0.15);border:1.5px solid rgba(249,115,22,0.4);border-radius:999px;padding:8px 16px;font-size:18px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;">
+          <div class="fire-emoji-wrap">
+            <span class="flame" id="fire-emoji">🔥</span>
+            <span class="ember">✦</span>
+            <span class="ember">·</span>
+            <span class="ember">✦</span>
+          </div>
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--fire)" id="fire-streak-num">0</span>
+        </button>
+      </header>
+
+      <!-- Daily Jackpot -->
+      <div style="text-align:center;padding:16px 0 8px">
+        <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1;color:rgba(255,255,255,0.7);letter-spacing:.06em;margin-bottom:16px" id="home-timer">--:--:--</div>
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 16px;border-radius:999px;background:var(--secondary-dim);border:1px solid rgba(245,188,13,0.3);margin-bottom:14px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5bc0d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+          <span style="color:var(--secondary);font-weight:700;font-size:13px">Today's Jackpot</span>
+        </div>
+        <div style="position:relative;display:inline-block">
+          <div class="jackpot-amount" id="jackpot-display">$0.00</div>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:80px;background:rgba(245,188,13,0.12);filter:blur(40px);border-radius:50%;z-index:-1"></div>
+        </div>
+      </div>
+
+      <!-- Monetag Ad Button -->
+      <div class="ad-card monetag">
+        <div class="ad-glow"></div>
+        <div class="ad-head">
+          <div class="ad-network">
+            <div class="ad-dot"></div>
+            <span class="ad-name">Monetag</span>
+            <span style="font-size:10px;color:rgba(255,255,255,0.3)">· Web Ads</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:3px">
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--fire);line-height:1" id="ad-count">0</span>
+            <span style="font-size:13px;font-weight:700;color:rgba(249,115,22,0.5)">/7</span>
+          </div>
+        </div>
+        <div class="ad-progress-track">
+          <div class="ad-progress-fill" id="ad-progress" style="width:0%;background:var(--primary)"></div>
+        </div>
+        <button class="btn" id="ad-btn" onclick="watchAd()" style="background:linear-gradient(135deg,var(--fire),var(--fire2));color:#000;box-shadow:0 4px 20px rgba(249,115,22,0.3);margin-top:4px">
+          <span style="font-size:18px">📺</span>
+          <span id="ad-btn-text">Watch Ad (+5 Tickets)</span>
+        </button>
+      </div>
+      <div id="ad-streak-status"></div>
+
+      <!-- Mystery prize teaser -->
+      <div class="mystery-card" id="mystery-card" style="display:none">
+        <div style="font-size:32px;margin-bottom:8px">🔮</div>
+        <div style="font-weight:700;margin-bottom:6px;color:var(--secondary)">Something Big Is Coming</div>
+        <div class="muted" style="font-size:13px;line-height:1.6" id="mystery-text">Keep going. Day 365 holds a mystery prize.</div>
+      </div>
+
+      <!-- Weekly Sunday Draw Card -->
+      <div class="weekly-card" style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:11px;color:rgba(167,139,250,0.7);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px">Sunday Draw</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff">Weekly Jackpot</div>
+          <div id="weekly-status" style="margin-top:6px"></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Syne',sans-serif;font-size:36px;font-weight:800;line-height:1;background:linear-gradient(135deg,var(--vip),#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" id="weekly-jackpot">$0.00</div>
+          <div style="font-size:11px;color:rgba(167,139,250,0.45);margin-top:4px">Every Sunday · WAT</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════ STATS ══════════ -->
+  <div class="page" id="page-stats">
+    <div class="sticky-header">
+      <h1 style="font-size:28px;font-family:'Syne',sans-serif;font-weight:800">Statistics</h1>
+      <p class="muted">Today's draw insights</p>
+    </div>
+    <div class="scroll" style="padding-top:12px;">
+      <div id="stat-cards" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ WINNERS ══════════ -->
+  <div class="page" id="page-winners">
+    <div class="scroll">
+      <header>
+        <h1 style="font-size:26px;font-family:'Syne',sans-serif;font-weight:800">Hall of Fame</h1>
+        <p class="muted">Draw winners</p>
+      </header>
+      <div style="display:flex;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;gap:4px">
+        <button id="winners-tab-daily" onclick="setWinnersTab('daily')" style="flex:1;padding:10px;border-radius:9px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;transition:all .2s;background:linear-gradient(135deg,var(--secondary),#f59e0b);color:#000;box-shadow:0 2px 10px rgba(245,188,13,0.3)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+          Daily
+        </button>
+        <button id="winners-tab-weekly" onclick="setWinnersTab('weekly')" style="flex:1;padding:10px;border-radius:9px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;transition:all .2s;background:transparent;color:var(--muted)">
+          📅 Sunday
+        </button>
+      </div>
+      <div id="winners-list"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ BANKED SUNDAYS PAGE ══════════ -->
+  <div class="page" id="page-banked">
+    <div class="scroll">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <h1 style="font-size:24px;font-family:'Syne',sans-serif;font-weight:800">☀️ Banked Sundays</h1>
+          <p class="muted" style="font-size:12px">Your weekly draw entries</p>
+        </div>
+        <button onclick="navigate('profile')" style="background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:36px;height:36px;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+
+      <!-- Sunday countdown -->
+      <div style="background:linear-gradient(135deg,var(--vip-dim),rgba(138,51,224,0.06));border:1px solid rgba(167,139,250,0.25);border-radius:18px;padding:20px;text-align:center">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Next Sunday draw in</div>
+        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--vip);line-height:1" id="sunday-big-timer">--d --h --m</div>
+        <div style="font-size:11px;color:rgba(167,139,250,0.6);margin-top:6px">Every Sunday midnight WAT</div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(167,139,250,0.15)">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">This week's prize pool</div>
+          <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:800;background:linear-gradient(135deg,var(--vip),#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" id="banked-weekly-jackpot">$0.00</div>
+        </div>
+      </div>
+
+      <!-- Qualification status -->
+      <div id="banked-qualify-status"></div>
+
+      <!-- Banked entries list -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-weight:700;font-size:14px">Your Banked Entries</div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--vip)" id="banked-total-count">0</div>
+        </div>
+        <div id="banked-entries-list"></div>
+      </div>
+
+      <!-- How to earn more removed per request -->
+    </div>
+  </div>
+
+  <!-- ══════════ PROFILE ══════════ -->
+  <div class="page" id="page-profile">
+    <div class="scroll" style="padding:20px 16px 100px;gap:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h1 style="font-size:28px;font-family:'Syne',sans-serif;font-weight:800">Profile</h1>
+        <div id="tg-avatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#5b1fa8);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;overflow:hidden;border:2px solid rgba(138,51,224,0.4)">👤</div>
+      </div>
+      <div id="profile-streak-summary"></div>
+      <div id="former-tag-wrap" style="display:none">
+        <div style="background:rgba(103,232,249,0.05);border:1px solid rgba(103,232,249,0.15);border-radius:10px;padding:8px 12px;text-align:center">
+          <span style="font-size:11px;color:var(--ice);font-weight:700" id="former-tag">⚡ Former 0-Day Streak Holder</span>
+        </div>
+      </div>
+      <div id="profile-menu"></div>
+    </div>
+  </div>
+
+  <!-- Sub-pages -->
+  <div class="page" id="page-prizes"><div class="scroll" id="prizes-list"></div></div>
+  <div class="page" id="page-withdraw"><div class="scroll" id="withdraw-content"></div></div>
+  <div class="page" id="page-faq"><div class="scroll" id="faq-list"></div></div>
+  <div class="page" id="page-referral"><div class="scroll" id="referral-content"></div></div>
+  <div class="page" id="page-contact"><div class="scroll" id="contact-content"></div></div>
+  <div class="page" id="page-terms">
+    <div class="sticky-header" style="display:flex;align-items:center;gap:8px;">
+      <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;flex-shrink:0;">‹</button>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Terms of Service</div>
+        <div class="muted" style="font-size:12px">Last updated March 2026</div>
+      </div>
+    </div>
+    <div class="scroll" style="padding-top:12px;" id="terms-list"></div>
+  </div>
+  <div class="page" id="page-privacy"><div class="scroll" id="privacy-list"></div></div>
+
+  <!-- ══════════ STREAK FULL-PAGE POPUP ══════════ -->
+  <div class="streak-popup" id="streak-popup">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 16px 0;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:24px" id="sp-icon">🔥</span>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px">Daily Streak</div>
+          <div style="font-size:11px;color:var(--muted)">Best: <span id="sp-best">0</span> days</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="text-align:right">
+          <div style="font-family:'Syne',sans-serif;font-size:44px;font-weight:800;line-height:1" id="sp-streak-num">0</div>
+          <div style="font-size:10px;color:var(--muted);font-weight:700;text-align:right">days</div>
+        </div>
+        <button onclick="closeStreakPopup()" style="background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:36px;height:36px;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+    </div>
+
+    <div class="streak-popup-scroll">
+      <div id="sp-tier-badge"></div>
+
+      <div id="sp-lock-msg" style="display:none;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:14px;padding:16px;text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">📺</div>
+        <div style="font-weight:700;color:var(--fire);margin-bottom:4px">Complete today's 7 ads first</div>
+        <div style="font-size:13px;color:var(--muted)">Watch all 7 ads to unlock your streak claim</div>
+        <div style="margin-top:12px;background:rgba(255,255,255,0.05);border-radius:10px;padding:10px">
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:var(--fire)" id="sp-ads-done">0</span>
+          <span style="color:var(--muted);font-size:14px">/7 ads watched today</span>
+        </div>
+      </div>
+
+      <div class="dots-row" id="sp-dots"></div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px">
+          <span class="muted">Next milestone: Day <span id="sp-next-day">7</span></span>
+          <span style="font-weight:700;color:var(--fire)" id="sp-next-reward">+1 Sunday entry</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="sp-progress-fill" style="width:0%"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:4px"><span id="sp-fraction">0/7</span> days in tier</div>
+      </div>
+
+      <button class="btn" id="sp-claim-btn" onclick="claimStreak()">
+        <span id="sp-claim-text">🔥 Claim Daily Streak</span>
+      </button>
+
+      <div id="sp-banked-wrap" style="display:none">
+        <div style="background:var(--vip-dim);border:1px solid rgba(167,139,250,0.25);border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:13px;color:var(--muted)">Banked Sunday entries</span>
+          <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--vip)">📅 <span id="sp-banked">0</span></span>
+        </div>
+      </div>
+
+      <!-- Streak Roadmap — shows only next 3 upcoming milestones -->
+      <div class="card">
+        <div style="font-weight:700;font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:6px">🗺️ Streak Roadmap</div>
+        <div id="sp-roadmap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <button class="nav-btn active" id="nav-home" onclick="navigate('home')">
+        <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" id="nav-stats" onclick="navigate('stats')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Stats</span>
+      </button>
+      <button class="nav-btn" id="nav-winners" onclick="navigate('winners')">
+        <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+        <span>Winners</span>
+      </button>
+      <button class="nav-btn" id="nav-profile" onclick="navigate('profile')">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Profile</span>
+        <!-- Contact badge for unread responses -->
+        <span id="contact-nav-badge" class="nav-badge" style="display:none">0</span>
+      </button>
+    </div>
+  </nav>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════
+const BASE_URL = '';
+
+const MILESTONES = {7:1, 14:2, 30:4, 60:8, 90:12, 180:24, 365:48};
+const MILESTONE_DAYS = [7,14,30,60,90,180,365];
+
+function var_secondary() { return '#f5bc0d'; }
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+// ✅ FIX: Prefer Telegram identity over random localStorage ID
+function getUsername() {
+  // 1. Try Telegram WebApp user data first
+  const tg = window.Telegram?.WebApp;
+  if (tg && tg.initDataUnsafe?.user) {
+    const u = tg.initDataUnsafe.user;
+    const name = u.username || u.first_name || (u.id ? `tg_${u.id}` : null);
+    if (name && name !== 'undefined' && name !== 'null') return name;
+  }
+  // 2. Fall back to stable localStorage ID
+  let u = localStorage.getItem('rafflepop_username');
+  if (!u) { u = `User_${Math.floor(10000 + Math.random() * 90000)}`; localStorage.setItem('rafflepop_username', u); }
+  return u;
+}
+const USERNAME = getUsername();
+
+function todayKey() { return new Date().toISOString().split('T')[0]; }
+
+let S = {
+  stats: { poolSize:0, jackpot:0, weeklyJackpot:0, weeklyQualifiers:0, nextSunday:'', lastDrawId:null, lastDrawPrize:0, lastDrawWinnerUsername:'' },
+  userStats: { adsWatchedToday:0, myTickets:0, totalTickets:0, totalPlayers:0, myChances:'0%', streakClaimedToday:false, qualifiesThisSunday:false },
+  streak: { currentStreak:0, longestStreak:0, formerLongestStreak:0, streakStatus:'active', heatWindowSecsLeft:0, bankedSundays:0, badges:[], freeHeatsRemaining:1, isVip:false },
+  watchingAd: false,
+  draws: [],
+  prizes: [],
+  // Contact messages — stored locally for demo; in production fetched from DB
+  contactMessages: JSON.parse(localStorage.getItem('rafflepop_contact_msgs') || '[]'),
+  unreadResponses: parseInt(localStorage.getItem('rafflepop_unread_responses') || '0'),
+};
+
+// Banked entries ledger — stores add/deduct history
+let bankedLedger = JSON.parse(localStorage.getItem('rafflepop_banked_ledger') || '[]');
+
+function saveLedger() { localStorage.setItem('rafflepop_banked_ledger', JSON.stringify(bankedLedger)); }
+
+function addLedgerEntry(type, amount, reason) {
+  bankedLedger.push({ type, amount, reason, date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}), ts: Date.now() });
+  saveLedger();
+}
+
+// ═══════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════
+async function api(path, opts={}) {
+  try {
+    const res = await fetch(BASE_URL + path, opts);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  } catch(e) { console.warn('[API]', path, e.message); return null; }
+}
+
+async function init() {
+  await api('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: USERNAME }) });
+  await Promise.all([fetchStats(), fetchUserStats(), fetchStreak(), fetchContactResponses()]);
+  initTelegramAvatar();
+  renderAll();
+  checkHeatWindow();
+  checkWinPopup();
+  updateContactBadge();
+  checkSundayAutoDeduct();
+}
+
+async function fetchStats() { const d = await api('/api/stats'); if (d) S.stats = d; }
+async function fetchUserStats() { const d = await api(`/api/user/${USERNAME}/stats`); if (d) S.userStats = d; }
+async function fetchStreak() { const d = await api(`/api/streak/${USERNAME}`); if (d) S.streak = d; }
+async function fetchDraws() { const d = await api('/api/draws'); if (d) S.draws = d; }
+async function fetchPrizes() { const d = await api(`/api/user/${USERNAME}/prizes`); if (d) S.prizes = d; }
+
+// Fetch admin responses to contact messages from backend
+async function fetchContactResponses() {
+  const d = await api(`/api/contact/${USERNAME}/responses`);
+  if (!d || !d.responses) return;
+  let newUnread = 0;
+  d.responses.forEach(r => {
+    // Check if this response already exists locally
+    const exists = S.contactMessages.some(m => m.from === 'admin' && m.ts === r.ts);
+    if (!exists) {
+      S.contactMessages.push({
+        from: 'admin',
+        text: r.message,
+        date: r.date || new Date(r.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+        ts: r.ts,
+      });
+      newUnread++;
+    }
+  });
+  if (newUnread > 0) {
+    S.contactMessages.sort((a,b) => a.ts - b.ts);
+    localStorage.setItem('rafflepop_contact_msgs', JSON.stringify(S.contactMessages));
+    S.unreadResponses = (S.unreadResponses || 0) + newUnread;
+    localStorage.setItem('rafflepop_unread_responses', String(S.unreadResponses));
+    updateContactBadge();
+    renderProfile();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function navigate(page) {
+  const pageEl = document.getElementById('page-' + page);
+  if (!pageEl) return;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  pageEl.classList.add('active');
+  const nb = document.getElementById('nav-' + page);
+  if (nb) nb.classList.add('active');
+
+  if (page === 'home' || page === 'stats') { fetchStats(); fetchUserStats(); fetchStreak(); }
+  if (page === 'winners') { fetchDraws(); renderWinners(); }
+  if (page === 'prizes') { fetchPrizes(); renderPrizes(); }
+  if (page === 'withdraw') { fetchPrizes(); renderWithdraw(); }
+  if (page === 'profile') { renderProfile(); renderProfileStreak(); }
+  if (page === 'banked') { renderBankedPage(); updateSundayBigTimer(); }
+  if (page === 'faq') renderFAQ();
+  if (page === 'referral') renderReferral();
+  if (page === 'contact') { renderContact(); markResponsesRead(); }
+  if (page === 'terms') renderTerms();
+  if (page === 'privacy') renderPrivacy();
+
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+function renderAll() {
+  renderJackpot();
+  renderAdButton();
+  renderFireButton();
+  renderWeeklyDraw();
+  renderStats();
+  renderMysteryCard();
+  renderProfileStreak();
+  updateContactBadge();
+}
+
+function renderFireButton() {
+  const sk = S.streak;
+  const s = sk.currentStreak || 0;
+  const claimed = S.userStats.streakClaimedToday;
+  const btn = document.getElementById('fire-btn');
+  const num = document.getElementById('fire-streak-num');
+  const flame = document.getElementById('fire-emoji');
+
+  if (!btn || !num) return;
+  num.textContent = s;
+
+  if (s > 0 && !claimed) btn.classList.add('fire-pulse');
+  else btn.classList.remove('fire-pulse');
+
+  if (flame) {
+    if (sk.streakStatus === 'heat_window') flame.textContent = '🧊';
+    else if (s >= 60) flame.textContent = '👑';
+    else flame.textContent = '🔥';
+  }
+}
+
+function renderJackpot() {
+  const j = document.getElementById('jackpot-display');
+  if (j) j.textContent = `$${(S.stats.jackpot||0).toFixed(2)}`;
+  const ps = document.getElementById('pool-size');
+  if (ps) ps.textContent = S.stats.poolSize || 0;
+  const wj = document.getElementById('weekly-jackpot');
+  if (wj) wj.textContent = `$${(S.stats.weeklyJackpot||0).toFixed(2)}`;
+}
+
+function initTelegramAvatar() {
+  const tg = window.Telegram?.WebApp;
+  if (!tg) return;
+  const user = tg.initDataUnsafe?.user;
+  if (!user) return;
+  const avatar = document.getElementById('tg-avatar');
+  if (!avatar) return;
+  if (user.photo_url) {
+    avatar.innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`;
+  } else {
+    const name = user.first_name || user.username || '?';
+    avatar.textContent = name.slice(0,2).toUpperCase();
+    avatar.style.fontSize = '14px';
+  }
+}
+
+function renderAdButton() {
+  const watched = Math.min(7, S.userStats.adsWatchedToday || 0);
+  const claimed = S.userStats.streakClaimedToday;
+  const pct = (watched / 7) * 100;
+
+  const prog = document.getElementById('ad-progress');
+  if (prog) { prog.style.width = pct + '%'; prog.style.background = 'var(--primary)'; }
+
+  const cnt = document.getElementById('ad-count');
+  if (cnt) cnt.textContent = watched;
+
+  const status = document.getElementById('ad-streak-status');
+  if (status) {
+    if (watched >= 7 && claimed) {
+      status.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--muted);font-style:italic">OR</span>
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+        </div>
+        <button onclick="shareReferral()" class="referral-pulse" style="
+          width:100%;padding:14px;border-radius:14px;
+          background:linear-gradient(135deg,var(--primary),#6a1fc0);
+          border:none;color:#fff;
+          font-family:'Syne',sans-serif;font-weight:800;font-size:16px;
+          cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          👥 Invite Friends — Get +25 Tickets
+        </button>`;
+    } else {
+      status.innerHTML = `<div style="text-align:center;color:rgba(249,115,22,0.6);font-size:12px">
+        Watch ${7 - watched} more ad${7-watched!==1?'s':''} to unlock streak
+      </div>`;
+    }
+  }
+
+  const btn = document.getElementById('ad-btn');
+  const txt = document.getElementById('ad-btn-text');
+  if (btn && txt) {
+    if (S.watchingAd) {
+      btn.disabled = true;
+      txt.innerHTML = '<span class="spinner"></span> Watching...';
+      btn.style.opacity = '1';
+    } else if (watched >= 7 && claimed) {
+      btn.disabled = true;
+      btn.style.background = 'rgba(255,255,255,0.06)';
+      btn.style.color = 'var(--muted)';
+      btn.style.boxShadow = 'none';
+      btn.style.opacity = '1';
+      txt.innerHTML = '✓ Come back tomorrow to earn more tickets';
+    } else {
+      btn.disabled = false;
+      btn.style.background = 'linear-gradient(135deg,var(--fire),var(--fire2))';
+      btn.style.color = '#000';
+      btn.style.boxShadow = '0 4px 20px rgba(249,115,22,0.3)';
+      btn.style.opacity = '1';
+      txt.innerHTML = '📺 Watch Ad (+5 Tickets)';
+    }
+  }
+}
+
+function shareReferral() {
+  const code = `RAFF-${USERNAME.replace('User_','').slice(0,6).toUpperCase()}`;
+  const link = `https://t.me/RafflePopBot?start=${code}`;
+  const text = `🎰 I'm playing RafflePop — free lottery powered by ads!\nWatch ads, earn tickets, win real prizes daily.\nJoin with my link and we both get bonus tickets:\n${link}`;
+  if (navigator.share) {
+    navigator.share({ title: 'RafflePop', text, url: link });
+  } else {
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+  }
+}
+
+function renderWeeklyDraw() {
+  // Update weekly-status qualification badge on home page
+  const ws = document.getElementById('weekly-status');
+  if (ws) {
+    if (S.userStats.qualifiesThisSunday) {
+      ws.innerHTML = `<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--vip);font-weight:700">
+        ✅ You qualify · ${S.stats.weeklyQualifiers || 0} participants
+      </div>`;
+    } else {
+      ws.innerHTML = `<div style="font-size:11px;color:rgba(167,139,250,0.5)">Complete a streak to qualify</div>`;
+    }
+  }
+}
+
+function renderStats() {
+  const s = S.userStats;
+  const sc = document.getElementById('stat-cards');
+  if (!sc) return;
+  const totalTickets = S.stats.poolSize > 0 ? S.stats.poolSize : (s.totalTickets || s.myTickets || 0);
+  const totalPlayers = s.totalPlayers > 0 ? s.totalPlayers : (s.myTickets > 0 ? 1 : 0);
+  const cards = [
+    { label:"Today's Total Tickets", value: totalTickets, color:'#3b82f6' },
+    { label:"Total Players Today",   value: totalPlayers, color:'var(--primary)' },
+    { label:"My Tickets",            value: s.myTickets||0, color:var_secondary() },
+    { label:"My Win Chance",         value: s.myChances||'0%', color:'#22c55e' },
+    { label:"Ads Watched Today",     value: `${s.adsWatchedToday||0}/7`, color:'var(--fire)' },
+    { label:"Banked Sundays",        value: S.streak.bankedSundays||0, color:'var(--vip)' },
+  ];
+  sc.innerHTML = cards.map((c) => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;align-items:center;justify-content:space-between" class="fade-up">
+      <div>
+        <div class="muted" style="font-size:12px;margin-bottom:6px">${c.label}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:${c.color}">${c.value}</div>
+      </div>
+    </div>`).join('');
+}
+
+let winnersTab = 'daily';
+
+function setWinnersTab(tab) {
+  winnersTab = tab;
+  const daily = document.getElementById('winners-tab-daily');
+  const weekly = document.getElementById('winners-tab-weekly');
+  if (daily) {
+    if (tab === 'daily') {
+      daily.style.background = 'linear-gradient(135deg,var(--secondary),#f59e0b)';
+      daily.style.color = '#000';
+      daily.style.boxShadow = '0 2px 10px rgba(245,188,13,0.3)';
+    } else {
+      daily.style.background = 'transparent';
+      daily.style.color = 'var(--muted)';
+      daily.style.boxShadow = 'none';
+    }
+  }
+  if (weekly) {
+    if (tab === 'weekly') {
+      weekly.style.background = 'linear-gradient(135deg,var(--vip),#c084fc)';
+      weekly.style.color = '#fff';
+      weekly.style.boxShadow = '0 2px 10px rgba(167,139,250,0.3)';
+    } else {
+      weekly.style.background = 'transparent';
+      weekly.style.color = 'var(--muted)';
+      weekly.style.boxShadow = 'none';
+    }
+  }
+  renderWinners();
+}
+
+function trophySVG(color='#f5bc0d', size=20) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;">
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+    <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+  </svg>`;
+}
+
+function renderWinners() {
+  const el = document.getElementById('winners-list');
+  if (!el) return;
+  const list = S.draws.filter(d => d.draw_type === winnersTab);
+  const color = winnersTab === 'daily' ? 'var(--secondary)' : 'var(--vip)';
+  if (list.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:48px 20px;background:var(--card);border:1px dashed var(--border);border-radius:18px">
+      <div style="margin-bottom:12px">${trophySVG('#6b7280', 48)}</div>
+      <p class="muted">No ${winnersTab} winners yet.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML = list.map(d => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px" class="fade-up">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:50%;background:${winnersTab==='daily' ? 'var(--secondary-dim)' : 'var(--vip-dim)'};display:flex;align-items:center;justify-content:center;">
+          ${trophySVG(winnersTab==='daily' ? '#f5bc0d' : '#a78bfa', 22)}
+        </div>
+        <div>
+          <div style="font-weight:700">${d.winner_username || 'Unknown'}</div>
+          <div class="muted" style="font-size:11px">${d.draw_date}</div>
+        </div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${color}">$${(d.prize_amount||0).toFixed(2)}</div>
+    </div>`).join('');
+}
+
+function renderProfile() {
+  const menu = document.getElementById('profile-menu');
+  if (!menu) return;
+  const unread = S.unreadResponses || 0;
+  const rows = [
+    { label:'My Prizes',        fn:"navigate('prizes')" },
+    { label:'Withdraw',         fn:"navigate('withdraw')" },
+    { label:'Invite Friends',   fn:"navigate('referral')" },
+    { label:'Purchase Heat',    fn:"showToast('Stars purchase coming soon!')" },
+    { label:'Premium',          fn:"showToast('Premium coming soon!')" },
+    { label:'FAQ',              fn:"navigate('faq')" },
+    { label:'Contact Us',       fn:"navigate('contact')", badge: unread > 0 ? unread : 0 },
+    { label:'Terms of Service', fn:"navigate('terms')" },
+    { label:'Privacy Policy',   fn:"navigate('privacy')" },
+  ];
+  let html = '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">';
+  rows.forEach(function(item, i) {
+    const border = i < rows.length - 1 ? 'border-bottom:1px solid var(--border);' : '';
+    const badgeHtml = item.badge ? `<span style="background:#ef4444;color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-right:6px">${item.badge}</span>` : '';
+    html += `<div onclick="${item.fn}" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;${border}">`;
+    html += `<span style="font-size:15px;font-weight:500">${item.label}</span>`;
+    html += `<div style="display:flex;align-items:center">${badgeHtml}<span style="color:var(--muted);font-size:20px;line-height:1">&#8250;</span></div>`;
+    html += '</div>';
+  });
+  html += '</div>';
+  menu.innerHTML = html;
+}
+
+function renderProfileStreak() {
+  const el = document.getElementById('profile-streak-summary');
+  if (!el) return;
+  const sk = S.streak;
+  const banked = sk.bankedSundays || 0;
+  const s = sk.currentStreak || 0;
+  el.innerHTML = `
+    <div style="background:linear-gradient(135deg,var(--vip-dim),rgba(138,51,224,0.06));border:1px solid rgba(167,139,250,0.25);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="navigate('banked')">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:20px">☀️</span>
+        <div>
+          <div style="font-weight:700;font-size:14px">Banked Sundays</div>
+          <div style="font-size:11px;color:var(--muted)">🔥 ${s}-day streak · tap to view</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--vip)">${banked}</span>
+        <span style="color:var(--muted);font-size:18px">›</span>
+      </div>
+    </div>`;
+
+  const ftw = document.getElementById('former-tag-wrap');
+  const ft = document.getElementById('former-tag');
+  if (ftw && ft && (sk.formerLongestStreak||0) > 0 && s === 0) {
+    ftw.style.display = 'block';
+    ft.textContent = `⚡ Former ${sk.formerLongestStreak}-Day Streak Holder`;
+  } else if (ftw) {
+    ftw.style.display = 'none';
+  }
+}
+
+// Banked entries current page
+let bankedEntriesPage = 0;
+const BANKED_PAGE_SIZE = 5;
+
+function renderBankedPage() {
+  const sk = S.streak;
+  const banked = sk.bankedSundays || 0;
+  const tc = document.getElementById('banked-total-count');
+  if (tc) tc.textContent = banked;
+  const wj = document.getElementById('banked-weekly-jackpot');
+  if (wj) wj.textContent = `$${(S.stats.weeklyJackpot||0).toFixed(2)}`;
+  const qs = document.getElementById('banked-qualify-status');
+  if (qs) {
+    if (S.userStats.qualifiesThisSunday) {
+      qs.innerHTML = `<div style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:12px;padding:12px;text-align:center;font-size:13px;color:var(--vip);font-weight:700">✅ You qualify for this Sunday's draw!</div>`;
+    } else if (banked > 0) {
+      qs.innerHTML = `<div style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);border-radius:12px;padding:12px;text-align:center;font-size:13px;color:var(--vip)">📅 ${banked} Sunday entr${banked!==1?'ies':'y'} banked — auto-entered each week</div>`;
+    } else {
+      qs.innerHTML = `<div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;font-size:13px;color:var(--muted)">Complete a streak to qualify for Sunday draws</div>`;
+    }
+  }
+  renderBankedEntries();
+}
+
+function renderBankedEntries() {
+  const el = document.getElementById('banked-entries-list');
+  if (!el) return;
+
+  if (bankedLedger.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:20px 0">
+      <div style="font-size:36px;margin-bottom:8px;opacity:.4">📅</div>
+      <div class="muted" style="font-size:13px">No entries yet.<br/>Complete a streak to start banking Sundays.</div>
+    </div>`;
+    return;
+  }
+
+  const sorted = [...bankedLedger].sort((a,b) => b.ts - a.ts);
+  const totalPages = Math.ceil(sorted.length / BANKED_PAGE_SIZE);
+  // Clamp page
+  bankedEntriesPage = Math.max(0, Math.min(bankedEntriesPage, totalPages - 1));
+  const start = bankedEntriesPage * BANKED_PAGE_SIZE;
+  const pageItems = sorted.slice(start, start + BANKED_PAGE_SIZE);
+
+  const rows = pageItems.map((entry, i) => {
+    const isAdd = entry.type === 'add';
+    const color = isAdd ? 'var(--green)' : '#f87171';
+    const sign = isAdd ? '+' : '-';
+    const isLast = i === pageItems.length - 1 && totalPages === 1;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;${i < pageItems.length-1 ? 'border-bottom:1px solid var(--border)' : ''}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:${isAdd ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'};display:flex;align-items:center;justify-content:center;font-size:14px">${isAdd ? '📅' : '↩️'}</div>
+        <div>
+          <div style="font-weight:600;font-size:13px;color:#fff">${entry.reason}</div>
+          <div style="font-size:11px;color:var(--muted)">${entry.date}</div>
+        </div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:${color}">${sign}${entry.amount}</div>
+    </div>`;
+  }).join('');
+
+  // Pagination nav
+  const nav = totalPages > 1 ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;margin-top:4px;border-top:1px solid var(--border);">
+      <button onclick="changeBankedPage(-1)" style="background:${bankedEntriesPage===0?'rgba(255,255,255,0.03)':'rgba(138,51,224,0.15)'};border:1px solid ${bankedEntriesPage===0?'var(--border)':'rgba(138,51,224,0.4)'};border-radius:10px;padding:8px 16px;color:${bankedEntriesPage===0?'var(--muted)':'var(--primary)'};font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:${bankedEntriesPage===0?'not-allowed':'pointer'};transition:all .2s;">‹ Prev</button>
+      <span style="font-size:12px;color:var(--muted);font-weight:600">${bankedEntriesPage+1} / ${totalPages}</span>
+      <button onclick="changeBankedPage(1)" style="background:${bankedEntriesPage===totalPages-1?'rgba(255,255,255,0.03)':'rgba(138,51,224,0.15)'};border:1px solid ${bankedEntriesPage===totalPages-1?'var(--border)':'rgba(138,51,224,0.4)'};border-radius:10px;padding:8px 16px;color:${bankedEntriesPage===totalPages-1?'var(--muted)':'var(--primary)'};font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:${bankedEntriesPage===totalPages-1?'not-allowed':'pointer'};transition:all .2s;">Next ›</button>
+    </div>` : '';
+
+  el.innerHTML = rows + nav;
+}
+
+function changeBankedPage(dir) {
+  const totalPages = Math.ceil(bankedLedger.length / BANKED_PAGE_SIZE);
+  bankedEntriesPage = Math.max(0, Math.min(bankedEntriesPage + dir, totalPages - 1));
+  renderBankedEntries();
+}
+
+function updateSundayBigTimer() {
+  const now = new Date();
+  const wat = new Date(now.getTime() + 3600000);
+  const day = wat.getUTCDay();
+  const daysUntil = day === 0 ? 7 : 7 - day;
+  const totalSecs = daysUntil * 86400 - wat.getUTCHours() * 3600 - wat.getUTCMinutes() * 60 - wat.getUTCSeconds();
+  const d = Math.floor(totalSecs / 86400);
+  const h = Math.floor((totalSecs % 86400) / 3600);
+  const m = Math.floor((totalSecs % 3600) / 60);
+  const el = document.getElementById('sunday-big-timer');
+  if (el) el.textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`;
+}
+
+function renderMysteryCard() {
+  const s = S.streak.currentStreak || 0;
+  const mc = document.getElementById('mystery-card');
+  const mt = document.getElementById('mystery-text');
+  if (!mc || !mt) return;
+  if (s >= 300) {
+    mc.style.display = 'block';
+    if (s >= 360) mt.textContent = `Day 365 is ${365-s} days away. Your prize is confirmed and waiting. 👀`;
+    else if (s >= 330) mt.textContent = `Something massive awaits at day 365. The prize pool is growing. Keep going.`;
+    else mt.textContent = `You're in the final stretch. Day 365 holds a mystery prize we can't reveal yet. 👀`;
+  } else mc.style.display = 'none';
+}
+
+function renderPrizes() {
+  const el = document.getElementById('prizes-list');
+  if (!el) return;
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">My Prizes</div>
+    <div class="muted" style="font-size:12px">Your winning history</div></div>
+  </div>` + (!S.prizes.length
+    ? `<div style="text-align:center;padding:48px 20px;background:var(--card);border:1px dashed var(--border);border-radius:18px">
+        <div style="margin-bottom:12px">${trophySVG('#6b7280', 48)}</div>
+        <p class="muted">No prizes yet. Keep playing!</p></div>`
+    : S.prizes.map(p => `
+      <div style="background:linear-gradient(90deg,rgba(245,188,13,0.1),transparent);border:1px solid rgba(245,188,13,0.2);border-radius:14px;padding:16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          ${trophySVG(p.draw_type==='weekly'?'#a78bfa':'#f5bc0d', 24)}
+          <div>
+            <div style="font-weight:700">${p.draw_type === 'weekly' ? 'Weekly' : 'Daily'} Draw</div>
+            <div class="muted" style="font-size:11px">${p.draw_date}</div>
+          </div>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--secondary)">$${(p.prize_amount||0).toFixed(2)}</div>
+      </div>`).join(''));
+}
+
+function renderWithdraw() {
+  const el = document.getElementById('withdraw-content');
+  if (!el) return;
+  const total = S.prizes.reduce((s,p) => s + (p.prize_amount||0), 0);
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Withdraw</div>
+    <div class="muted" style="font-size:12px">Cash out your winnings</div></div>
+  </div>
+  <div style="background:linear-gradient(135deg,var(--secondary-dim),rgba(245,188,13,0.03));border:1px solid rgba(245,188,13,0.3);border-radius:18px;padding:28px;text-align:center">
+    <div class="muted" style="margin-bottom:6px">Available Balance</div>
+    <div style="font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--secondary)">$${total.toFixed(2)}</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Minimum withdrawal: $5.00</div>
+  </div>
+  ${total >= 5
+    ? `<button class="btn btn-gold" onclick="showToast('Withdrawal request submitted!')">Withdraw $${total.toFixed(2)}</button>`
+    : `<div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:14px;padding:20px;text-align:center">
+        <p style="color:#fdba74;font-weight:700;margin-bottom:6px">Minimum $5.00 Required</p>
+        <p class="muted" style="font-size:12px">You have $${total.toFixed(2)}. Keep winning!</p>
+       </div>`
+  }`;
+}
+
+function renderReferral() {
+  const el = document.getElementById('referral-content');
+  if (!el) return;
+  const code = `RAFF-${USERNAME.replace('User_','').slice(0,6).toUpperCase()}`;
+  const link = `t.me/RafflePopBot?start=${code}`;
+  el.innerHTML = `
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Invite Friends</div>
+      <div class="muted" style="font-size:12px">Earn +25 tickets per referral</div>
+    </div>
+  </div>
+
+  <!-- Hero banner -->
+  <div style="background:linear-gradient(135deg,rgba(138,51,224,0.25),rgba(138,51,224,0.08));border:1px solid rgba(138,51,224,0.35);border-radius:20px;padding:24px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:10px">👥</div>
+    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:8px">Invite &amp; Both Win</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:20px">Friends who join with your link get bonus tickets.<br/>You get <strong style="color:var(--primary)">+25 tickets</strong> for every friend who joins.</div>
+    <button onclick="shareReferral()" class="referral-pulse" style="width:100%;padding:16px;border-radius:14px;background:linear-gradient(135deg,var(--primary),#6a1fc0);border:none;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 24px rgba(138,51,224,0.4);">
+      📤 Share Your Link
+    </button>
+  </div>
+
+  <!-- Link copy row -->
+  <div class="card" style="padding:18px;">
+    <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Your Referral Link</div>
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px">
+      <span style="flex:1;font-size:12px;color:var(--muted);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${link}</span>
+      <button onclick="navigator.clipboard.writeText('${link}');showToast('🔗 Link copied!')" style="background:var(--primary-dim);border:1px solid rgba(138,51,224,0.4);border-radius:8px;padding:7px 14px;color:var(--primary);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Copy</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6">Your code: <strong style="color:var(--primary);font-family:monospace">${code}</strong></div>
+  </div>
+
+  <!-- Reward info cards -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;text-align:center;">
+      <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--primary);line-height:1">+25</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4">Tickets for<br/>every invite</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;text-align:center;">
+      <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--secondary);line-height:1">+10</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4">Bonus tickets<br/>for your friend</div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// FAQ — fixed to show full text without clipping
+// ═══════════════════════════════════════════════
+function renderFAQ() {
+  const el = document.getElementById('faq-list');
+  if (!el) return;
+  const faqs = [
+    {q:'How do I earn tickets?', a:'Watch 7 Monetag ads daily. Each ad gives 5 tickets automatically entered into the daily draw. You can also earn bonus tickets by referring friends.'},
+    {q:'How does the weekly draw work?', a:'Complete a 7-day streak (watch 7 ads AND claim streak every day for 7 days). You automatically qualify for that Sunday\'s draw with equal chance as all other qualifiers.'},
+    {q:'What happens if I miss a day?', a:'Your streak auto-freezes. You have 24 hours after returning to heat it up and save your streak. Otherwise it liquidates and you lose 50% of banked Sundays.'},
+    {q:'What are banked Sundays?', a:'When you hit streak milestones (7, 14, 30, 60, 90, 180, 365 days) you bank future Sunday entries. These consume one per Sunday automatically.'},
+    {q:'How are winners selected?', a:'One random ticket is drawn from all daily tickets. For weekly draws, one qualifier is selected with equal probability. All draws use provably fair cryptographic randomness.'},
+    {q:'What is the 365-day mystery prize?', a:'We can\'t reveal the amount. It grows with our user base. We\'ll reveal it at day 360 for anyone who reaches it.'},
+  ];
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">FAQ</div></div>
+  </div>` + faqs.map(f => `
+    <details class="faq-item">
+      <summary class="faq-q">
+        <span style="color:var(--secondary);flex-shrink:0;font-size:15px">?</span>
+        <span style="flex:1">${f.q}</span>
+        <div class="faq-chevron">▾</div>
+      </summary>
+      <div class="faq-a">${f.a}</div>
+    </details>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// CONTACT US — Form + Response Thread
+// ═══════════════════════════════════════════════
+function getTelegramUserId() {
+  const tg = window.Telegram?.WebApp;
+  if (tg?.initDataUnsafe?.user?.id) return String(tg.initDataUnsafe.user.id);
+  return USERNAME; // fallback to generated username
+}
+
+function renderContact() {
+  const el = document.getElementById('contact-content');
+  if (!el) return;
+
+  const messages = S.contactMessages;
+
+  // Build thread HTML
+  let threadHtml = '';
+  if (messages.length > 0) {
+    threadHtml = `<div class="card" style="padding:16px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:14px;color:#fff">Message Thread</div>
+      ${messages.map(m => {
+        if (m.from === 'admin') {
+          return `<div class="response-bubble admin">
+            <div style="font-size:10px;color:rgba(138,51,224,0.7);font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">RafflePop Support</div>
+            ${m.text}
+            <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-top:5px">${m.date}</div>
+          </div>`;
+        } else {
+          return `<div class="response-bubble user-msg">
+            <div style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">You</div>
+            ${m.text}
+            <div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:5px">${m.date}</div>
+          </div>`;
+        }
+      }).join('')}
+    </div>`;
+  }
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Contact Us</div>
+        <div class="muted" style="font-size:12px">Issues, complaints or suggestions</div>
+      </div>
+    </div>
+
+    ${threadHtml}
+
+    <div class="contact-form">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Telegram / User ID</div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:rgba(255,255,255,0.4);font-family:monospace">${getTelegramUserId()}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Type</div>
+        <div style="display:flex;gap:8px;">
+          ${['Issue','Complaint','Suggestion'].map((t,i) => `
+            <label style="flex:1;cursor:pointer;">
+              <input type="radio" name="contact_type" value="${t}" ${i===0?'checked':''} style="display:none" onchange="window._contactType=this.value"/>
+              <div class="contact-type-btn" data-type="${t}" onclick="selectContactType('${t}')" style="text-align:center;padding:8px 4px;border-radius:10px;border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--muted);background:rgba(255,255,255,0.03);cursor:pointer;transition:all .2s;${i===0?'background:var(--primary-dim);border-color:rgba(138,51,224,0.4);color:var(--primary)':''}">${t}</div>
+            </label>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Your Message</div>
+        <textarea id="contact-message-input" class="contact-textarea" placeholder="Describe your issue, complaint or suggestion in detail…" maxlength="1000"></textarea>
+      </div>
+      <button onclick="submitContact()" class="btn btn-primary" style="margin-top:0">
+        📤 Submit
+      </button>
+    </div>`;
+
+  window._contactType = 'Issue';
+}
+
+function selectContactType(type) {
+  window._contactType = type;
+  document.querySelectorAll('.contact-type-btn').forEach(btn => {
+    if (btn.dataset.type === type) {
+      btn.style.background = 'var(--primary-dim)';
+      btn.style.borderColor = 'rgba(138,51,224,0.4)';
+      btn.style.color = 'var(--primary)';
+    } else {
+      btn.style.background = 'rgba(255,255,255,0.03)';
+      btn.style.borderColor = 'var(--border)';
+      btn.style.color = 'var(--muted)';
+    }
+  });
+}
+
+async function submitContact() {
+  const input = document.getElementById('contact-message-input');
+  const text = input ? input.value.trim() : '';
+  if (!text) { showToast('Please write a message first'); return; }
+
+  const msgObj = {
+    from: 'user',
+    text,
+    type: window._contactType || 'Issue',
+    userId: getTelegramUserId(),
+    date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+    ts: Date.now(),
+  };
+
+  // Save locally
+  S.contactMessages.push(msgObj);
+  localStorage.setItem('rafflepop_contact_msgs', JSON.stringify(S.contactMessages));
+
+  // Send to backend
+  await api('/api/contact', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ username: USERNAME, userId: getTelegramUserId(), type: msgObj.type, message: text })
+  });
+
+  // Show sent popup
+  document.getElementById('contact-sent-popup').style.display = 'flex';
+  if (input) input.value = '';
+}
+
+function closeContactSent() {
+  document.getElementById('contact-sent-popup').style.display = 'none';
+  renderContact();
+}
+
+function updateContactBadge() {
+  const count = S.unreadResponses || 0;
+  const badge = document.getElementById('contact-nav-badge');
+  if (badge) {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'flex' : 'none';
+  }
+}
+
+function markResponsesRead() {
+  S.unreadResponses = 0;
+  localStorage.setItem('rafflepop_unread_responses', '0');
+  updateContactBadge();
+  // Re-render profile menu to clear badge
+  if (document.getElementById('page-profile').classList.contains('active')) renderProfile();
+}
+
+// ── Auto-deduct one banked Sunday on draw day (runs once per Sunday) ──
+function checkSundayAutoDeduct() {
+  const now = new Date();
+  // WAT = UTC+1; Sunday midnight WAT = Saturday 23:00 UTC
+  const watDay = new Date(now.getTime() + 3600000).getUTCDay();
+  const watHour = new Date(now.getTime() + 3600000).getUTCHours();
+  const isDrawTime = (watDay === 0 && watHour >= 23) || (watDay === 1 && watHour < 1);
+  if (!isDrawTime) return;
+
+  // Build a key for this specific Sunday
+  const d = new Date(now.getTime() + 3600000);
+  d.setUTCDate(d.getUTCDate() - d.getUTCDay()); // rewind to Sunday
+  const thisWeekKey = d.toISOString().slice(0, 10);
+  const lastKey = localStorage.getItem('rafflepop_last_sunday_deduct');
+  if (lastKey === thisWeekKey) return; // already done this week
+
+  const banked = S.streak.bankedSundays || 0;
+  if (banked <= 0) return;
+
+  S.streak.bankedSundays = banked - 1;
+  addLedgerEntry('deduct', 1, "Sunday Draw Entry Used");
+  localStorage.setItem('rafflepop_last_sunday_deduct', thisWeekKey);
+  renderAll();
+  showToast("📅 1 Banked Sunday used for tonight's draw!");
+}
+
+// ═══════════════════════════════════════════════
+// TERMS — Updated content
+// ═══════════════════════════════════════════════
+function renderTerms() {
+  const el = document.getElementById('terms-list');
+  if (!el) return;
+  const sections = [
+    {t:'1. Acceptance', c:'By using RafflePop you agree to these Terms. If you disagree, please stop using the app.'},
+    {t:'2. How It Works', c:'Watch 7 Monetag ads daily to earn 35 tickets automatically entered into the daily draw, and can earn more tickets for that day\'s draw by referring others. Complete a 7-day streak to qualify for Sunday\'s weekly draw.'},
+    {t:'3. Prizes & Payouts', c:'There are daily prizes and Sunday prizes. Daily prizes are 50% of that day\'s ad revenue. Weekly prizes are 25% of the week\'s accumulated revenue. Minimum withdrawal is $5.'},
+    {t:'4. Streaks', c:'Streaks require opening the app AND watching 7 ads daily before midnight WAT. Missing a day auto-freezes your streak with a 24-hour heat window.'},
+    {t:'5. Eligibility', c:'Must be 18+. Not available where lottery games are prohibited by law.'},
+    {t:'6. Fair Play', c:'Manipulation, automation, or exploitation results in immediate permanent ban and prize forfeiture.'},
+    {t:'7. Liability', c:'RafflePop is provided as-is. We are not liable for indirect or consequential damages.'},
+  ];
+  el.innerHTML = sections.map(s => `
+    <div class="card" style="margin-bottom:10px">
+      <div style="font-weight:700;margin-bottom:8px;font-size:14px">${s.t}</div>
+      <p class="muted" style="font-size:13px;line-height:1.7">${s.c}</p>
+    </div>`).join('');
+}
+
+function renderPrivacy() {
+  const el = document.getElementById('privacy-list');
+  if (!el) return;
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button onclick="navigate('profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">‹</button>
+    <div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Privacy Policy</div>
+    <div class="muted" style="font-size:12px">Last updated March 2026</div></div>
+  </div>
+  <div class="card"><div style="font-weight:700;margin-bottom:8px">What We Collect</div>
+    <p class="muted" style="font-size:13px;line-height:1.7">A randomly generated User ID stored locally. No name, email, or personal data unless you provide a payment method for withdrawals.</p></div>
+  <div class="card" style="margin-top:10px"><div style="font-weight:700;margin-bottom:8px">Ads & Third Parties</div>
+    <p class="muted" style="font-size:13px;line-height:1.7">Monetag may collect anonymised ad interaction data per their own privacy policy. We never sell your User ID.</p></div>`;
+}
+
+// ═══════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════
+async function watchAd() {
+  if (S.watchingAd) return;
+  if ((S.userStats.adsWatchedToday||0) >= 7 && S.userStats.streakClaimedToday) return;
+  S.watchingAd = true;
+  renderAdButton();
+  await new Promise(r => setTimeout(r, 3000));
+  const result = await api('/api/enter', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ username: USERNAME, adNetwork: 'monetag' })
+  });
+  S.watchingAd = false;
+  if (result) {
+    S.userStats.adsWatchedToday = result.adsWatched;
+    S.userStats.myTickets = (S.userStats.myTickets || 0) + 5;
+    showToast(`🎟️ +5 tickets! (${result.adsWatched}/7 ads today)`);
+    triggerConfetti('#f97316', 50);
+    if (result.adsWatched >= 7 && !S.userStats.streakClaimedToday) await autoClaimStreak();
+  } else {
+    S.userStats.adsWatchedToday = (S.userStats.adsWatchedToday||0) + 1;
+    S.userStats.myTickets = (S.userStats.myTickets||0) + 5;
+    S.userStats.totalTickets = (S.userStats.totalTickets||0) + 5;
+    S.userStats.totalPlayers = Math.max(1, S.userStats.totalPlayers||1);
+    S.stats.poolSize = (S.stats.poolSize||0) + 5;
+    const total = S.userStats.totalTickets || S.userStats.myTickets || 1;
+    S.userStats.myChances = ((S.userStats.myTickets / total) * 100).toFixed(1) + '%';
+    showToast(`🎟️ +5 tickets! (${S.userStats.adsWatchedToday}/7 ads today)`);
+    triggerConfetti('#f97316', 50);
+    if (S.userStats.adsWatchedToday >= 7 && !S.userStats.streakClaimedToday) await autoClaimStreak();
+  }
+  renderAll();
+}
+
+async function autoClaimStreak() {
+  const result = await api('/api/streak/claim', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ username: USERNAME })
+  });
+  if (result?.ok) {
+    S.userStats.streakClaimedToday = true;
+    S.streak.currentStreak = (S.streak.currentStreak || 0) + 1;
+    if (result.streakData) S.streak = { ...S.streak, ...result.streakData };
+  } else {
+    S.userStats.streakClaimedToday = true;
+    const prevStreak = S.streak.currentStreak || 0;
+    S.streak.currentStreak = prevStreak + 1;
+    const newStreak = S.streak.currentStreak;
+    // Check if milestone hit — add ledger entry
+    if (MILESTONES[newStreak]) {
+      const sundays = MILESTONES[newStreak];
+      S.streak.bankedSundays = (S.streak.bankedSundays || 0) + sundays;
+      addLedgerEntry('add', sundays, `Day ${newStreak} Milestone Reward`);
+    }
+  }
+  triggerConfetti(getStreakColor(S.streak.currentStreak), 100);
+  renderAll();
+  setTimeout(() => openStreakPopup(), 400);
+}
+
+async function claimStreak() { await autoClaimStreak(); }
+
+// ═══════════════════════════════════════════════
+// HEAT UP SYSTEM
+// ═══════════════════════════════════════════════
+function checkHeatWindow() { if (S.streak.streakStatus === 'heat_window') showHeatPopup(); }
+
+function showHeatPopup() {
+  const sk = S.streak;
+  const loseStreak = document.getElementById('heat-lose-streak');
+  const loseSundays = document.getElementById('heat-lose-sundays');
+  const freeRem = document.getElementById('heat-free-remaining');
+  const heatFreeBtn = document.getElementById('heat-free-btn');
+  if (loseStreak) loseStreak.textContent = `• Your ${sk.currentStreak}-day streak`;
+  if (loseSundays) loseSundays.textContent = `• ${Math.floor((sk.bankedSundays||0) * 0.5)} of your ${sk.bankedSundays} banked Sundays`;
+  if (freeRem) {
+    const hasHeat = (sk.freeHeatsRemaining || 0) > 0;
+    const days = sk.daysUntilNextHeat || 30;
+    freeRem.textContent = hasHeat ? `1 free heat available` : `Free heat available in ${days} day${days !== 1 ? 's' : ''}`;
+  }
+  if (heatFreeBtn) heatFreeBtn.disabled = !sk.freeHeatsRemaining;
+  if (sk.heatWindowSecsLeft > 0) startHeatTimer(sk.heatWindowSecsLeft);
+  document.getElementById('heat-overlay').classList.add('show');
+}
+
+let heatTimerInterval = null;
+function startHeatTimer(secsLeft) {
+  clearInterval(heatTimerInterval);
+  let secs = secsLeft;
+  const el = document.getElementById('heat-timer');
+  const tick = () => {
+    if (!el) return;
+    const h = Math.floor(secs/3600), m = Math.floor((secs%3600)/60), s = secs % 60;
+    el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (secs <= 0) { clearInterval(heatTimerInterval); el.textContent = '00:00:00'; showLiquidation(); document.getElementById('heat-overlay').classList.remove('show'); }
+    secs--;
+  };
+  tick();
+  heatTimerInterval = setInterval(tick, 1000);
+}
+
+async function heatUpStreak() {
+  const result = await api('/api/streak/heat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: USERNAME }) });
+  if (result?.ok) {
+    clearInterval(heatTimerInterval);
+    document.getElementById('heat-overlay').classList.remove('show');
+    S.streak.streakStatus = 'active';
+    S.streak.freeHeatsRemaining--;
+    showToast(`🔥 Streak saved! Back to ${result.streakRestored} days.`);
+    triggerConfetti('#f97316', 60);
+    await fetchStreak();
+    renderAll();
+  } else if (result?.canPurchase) {
+    showPurchaseOptions();
+  } else {
+    document.getElementById('heat-overlay').classList.remove('show');
+    showToast('🔥 Streak saved!');
+  }
+}
+
+function showPurchaseOptions() { showToast('⭐ Stars purchase coming soon!'); }
+
+function ignoreHeat() {
+  clearInterval(heatTimerInterval);
+  document.getElementById('heat-overlay').classList.remove('show');
+  showLiquidation();
+}
+
+// ═══════════════════════════════════════════════
+// LIQUIDATION
+// ═══════════════════════════════════════════════
+function showLiquidation() {
+  const sk = S.streak;
+  const streak = sk.currentStreak || 0;
+  const sundaysBefore = sk.bankedSundays || 0;
+  const floor = sk.floor || 0;
+  const afterLoss = Math.floor(sundaysBefore * 0.5);
+  const sundaysAfter = Math.max(afterLoss, floor);
+  const sundaysLost = sundaysBefore - sundaysAfter;
+  const floorProtected = sundaysAfter === floor && afterLoss < floor;
+  const tierAnchor = sk.tierAnchor || 0;
+  const nextTarget = sk.nextTarget || 7;
+
+  S.streak.currentStreak = 0;
+  S.streak.streakStatus = 'active';
+  S.streak.bankedSundays = sundaysAfter;
+  S.streak.formerLongestStreak = Math.max(streak, S.streak.formerLongestStreak || 0);
+
+  if (sundaysLost > 0) addLedgerEntry('deduct', sundaysLost, 'Streak Reset — 50% loss');
+
+  const liqStreak = document.getElementById('liq-streak');
+  const liqSundays = document.getElementById('liq-sundays');
+  const liqText = document.getElementById('liq-text');
+  const liqExtra = document.getElementById('liq-extra');
+  const liqTitle = document.getElementById('liq-title');
+  const liqEmoji = document.getElementById('liq-emoji');
+
+  if (liqStreak) liqStreak.textContent = `${streak} days`;
+  if (liqSundays) liqSundays.textContent = sundaysAfter;
+
+  if (floorProtected) {
+    if (liqEmoji) liqEmoji.textContent = '🛡️';
+    if (liqTitle) { liqTitle.textContent = 'Streak Reset'; liqTitle.style.color = 'var(--vip)'; }
+    if (liqText) liqText.textContent = `Your ${streak}-day streak has reset. But your Day ${tierAnchor} milestone protects your ${floor} banked Sunday${floor !== 1 ? 's' : ''} — they can't be taken away.`;
+    if (liqExtra) liqExtra.innerHTML = `<div style="background:var(--vip-dim);border:1px solid rgba(167,139,250,0.3);border-radius:12px;padding:12px;text-align:center;font-size:12px;color:var(--vip);font-weight:700">🛡️ Milestone Floor Active — ${floor} Sunday${floor !== 1 ? 's' : ''} permanently protected</div>`;
+  } else {
+    if (liqEmoji) liqEmoji.textContent = '❄️';
+    if (liqTitle) { liqTitle.textContent = 'Streak Melted'; liqTitle.style.color = 'var(--ice)'; }
+    if (liqText) liqText.textContent = `Your ${streak}-day streak has melted. You lost ${sundaysLost} banked Sunday${sundaysLost !== 1 ? 's' : ''}. ${sundaysAfter} remain${floor > 0 ? ` (${floor} permanently protected by your Day ${tierAnchor} milestone)` : ''}.`;
+    if (liqExtra) liqExtra.innerHTML = floor > 0 ? `<div style="background:rgba(103,232,249,0.06);border:1px solid rgba(103,232,249,0.15);border-radius:12px;padding:10px;text-align:center;font-size:11px;color:var(--ice)">🛡️ ${floor} Sunday${floor !== 1 ? 's' : ''} permanently protected by Day ${tierAnchor} milestone</div>` : '';
+  }
+
+  const liqRestart = document.getElementById('liq-restart');
+  if (liqRestart) {
+    if (tierAnchor > 0) {
+      liqRestart.innerHTML = `<div style="background:rgba(138,51,224,0.08);border:1px solid rgba(138,51,224,0.2);border-radius:12px;padding:12px;font-size:12px">
+        <div style="color:var(--primary);font-weight:700;margin-bottom:4px">🎯 Your Restart Point</div>
+        <div class="muted">You're anchored to Day ${tierAnchor}. Rebuild ${nextTarget} days to earn +${sk.nextRewardSundays || '?'} more Sunday${sk.nextRewardSundays !== 1 ? 's' : ''}.</div>
+      </div>`;
+    } else liqRestart.innerHTML = '';
+  }
+
+  document.getElementById('liq-overlay').classList.add('show');
+  renderAll();
+}
+
+function closeLiquidation() { document.getElementById('liq-overlay').classList.remove('show'); }
+
+// ═══════════════════════════════════════════════
+// WIN POPUP
+// ═══════════════════════════════════════════════
+function checkWinPopup() {
+  const seen = JSON.parse(localStorage.getItem('rafflepop_seen_draws')||'[]');
+  const s = S.stats;
+  if (s.lastDrawWinnerUsername === USERNAME && s.lastDrawId && !seen.includes(s.lastDrawId)) {
+    document.getElementById('win-prize').textContent = `$${(s.lastDrawPrize||0).toFixed(2)}`;
+    document.getElementById('win-overlay').style.display = 'flex';
+    triggerConfetti('#f5bc0d', 120);
+  }
+}
+
+function claimPrize() {
+  document.getElementById('win-overlay').innerHTML = `<div class="win-card">
+    <div style="font-size:48px;margin-bottom:12px">✅</div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:20px;margin-bottom:10px">Prize Claimed!</h2>
+    <p class="muted" style="margin-bottom:20px;line-height:1.6">Your prize will be sent within 1–2 business days.</p>
+    <button class="btn btn-ghost" onclick="dismissWin()">Close</button>
+  </div>`;
+}
+
+function dismissWin() {
+  const seen = JSON.parse(localStorage.getItem('rafflepop_seen_draws')||'[]');
+  if (S.stats.lastDrawId) seen.push(S.stats.lastDrawId);
+  localStorage.setItem('rafflepop_seen_draws', JSON.stringify(seen));
+  document.getElementById('win-overlay').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function getStreakColor(s) {
+  if (s >= 365) return '#f5bc0d';
+  if (s >= 180) return '#f5bc0d';
+  if (s >= 90)  return '#67e8f9';
+  if (s >= 60)  return '#a78bfa';
+  if (s >= 30)  return '#22c55e';
+  if (s >= 14)  return '#eab308';
+  if (s >= 7)   return '#f59e0b';
+  return '#f97316';
+}
+
+function getTier(s) {
+  const tiers = [
+    {min:365,name:'Legend',icon:'🏆',color:'#f5bc0d'},
+    {min:180,name:'Icon',icon:'🌟',color:'#f5bc0d'},
+    {min:90,name:'Elite',icon:'💎',color:'#67e8f9'},
+    {min:60,name:'VIP',icon:'👑',color:'#a78bfa'},
+    {min:30,name:'Champion',icon:'🏅',color:'#67e8f9'},
+    {min:14,name:'Dedicated',icon:'🔥',color:'#f5bc0d'},
+    {min:7,name:'Regular',icon:'⚡',color:'#c0c0c0'},
+    {min:0,name:'Newcomer',icon:'🌱',color:'#cd853f'},
+  ];
+  return tiers.find(t => s >= t.min) || tiers[tiers.length-1];
+}
+
+// ═══════════════════════════════════════════════
+// STREAK POPUP
+// ═══════════════════════════════════════════════
+function openStreakPopup() { renderStreakPopup(); document.getElementById('streak-popup').classList.add('open'); }
+function closeStreakPopup() { document.getElementById('streak-popup').classList.remove('open'); }
+
+function renderStreakPopup() {
+  const sk = S.streak;
+  const s = sk.currentStreak || 0;
+  const adsOk = (S.userStats.adsWatchedToday || 0) >= 7;
+  const claimed = S.userStats.streakClaimedToday;
+  const color = getStreakColor(s);
+  const tier = getTier(s);
+
+  const spIcon = document.getElementById('sp-icon');
+  if (spIcon) spIcon.textContent = sk.streakStatus === 'heat_window' ? '🧊' : s >= 60 ? '👑' : '🔥';
+  const spNum = document.getElementById('sp-streak-num');
+  if (spNum) { spNum.textContent = s; spNum.style.color = color; }
+  const spBest = document.getElementById('sp-best');
+  if (spBest) spBest.textContent = sk.longestStreak || 0;
+
+  const spTier = document.getElementById('sp-tier-badge');
+  if (spTier) spTier.innerHTML = `<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ${tier.color}40;background:${tier.color}15;color:${tier.color}">${tier.icon} ${tier.name}${s >= 60 ? ' · VIP Active' : ''}</div>`;
+
+  const lockMsg = document.getElementById('sp-lock-msg');
+  const adsDone = document.getElementById('sp-ads-done');
+  if (lockMsg) lockMsg.style.display = !adsOk ? 'block' : 'none';
+  if (adsDone) adsDone.textContent = S.userStats.adsWatchedToday || 0;
+
+  const days = ['S','M','T','W','T','F','S'];
+  const spDots = document.getElementById('sp-dots');
+  if (spDots) {
+    spDots.innerHTML = Array.from({length:7}, (_,i) => {
+      const daysAgo = 6 - i;
+      const filled = daysAgo < s || (daysAgo === 0 && claimed);
+      const frozen = daysAgo === 0 && sk.streakStatus === 'heat_window';
+      const isToday = daysAgo === 0;
+      const dayLabel = days[new Date(Date.now() - daysAgo * 86400000).getDay()];
+      return `<div class="dot-wrap">
+        <div class="s-dot ${filled?'filled':''} ${frozen?'frozen':''} ${isToday&&!filled&&!frozen?'today-empty':''}">
+          ${frozen ? '🧊' : filled ? '✓' : dayLabel}
+        </div>
+        <div class="dot-lbl ${isToday?'dot-today-lbl':''}">${isToday?'Today':dayLabel}</div>
+      </div>`;
+    }).join('');
+  }
+
+  const tierAnchor = sk.tierAnchor || 0;
+  const nextTarget = sk.nextTarget || 7;
+  const tierLength = nextTarget - tierAnchor;
+  const pct = tierLength > 0 ? (s / tierLength) * 100 : 100;
+  const spPf = document.getElementById('sp-progress-fill');
+  if (spPf) { spPf.style.width = Math.min(100,pct)+'%'; spPf.style.background = `linear-gradient(90deg,${color},${color}99)`; }
+  const spNd = document.getElementById('sp-next-day'); if (spNd) spNd.textContent = nextTarget;
+  const spNr = document.getElementById('sp-next-reward');
+  if (spNr) { spNr.textContent = `+${sk.nextRewardSundays || MILESTONES[nextTarget] || 1} Sunday${(sk.nextRewardSundays||1)!==1?'s':''}` ; spNr.style.color = color; }
+  const spFr = document.getElementById('sp-fraction'); if (spFr) spFr.textContent = `${s}/${tierLength}`;
+
+  const spBtn = document.getElementById('sp-claim-btn');
+  const spTxt = document.getElementById('sp-claim-text');
+  if (spBtn && spTxt) {
+    if (claimed) {
+      spBtn.style.cssText = 'background:linear-gradient(135deg,var(--primary),#6a1fc0);color:#fff;width:100%;padding:14px;border-radius:12px;border:none;font-family:DM Sans,sans-serif;font-weight:700;font-size:15px;cursor:default;box-shadow:0 4px 20px rgba(138,51,224,0.35)';
+      spBtn.disabled = true;
+      spTxt.textContent = `🎉 Day ${s} Streak Complete!`;
+    } else if (adsOk) {
+      spBtn.style.cssText = `background:linear-gradient(135deg,${color},${color}cc);color:#000;width:100%;padding:14px;border-radius:12px;border:none;font-family:DM Sans,sans-serif;font-weight:700;font-size:15px;cursor:pointer`;
+      spBtn.disabled = false;
+      spTxt.textContent = '🔥 Claim Daily Streak';
+    } else {
+      spBtn.style.cssText = 'background:rgba(255,255,255,0.05);color:var(--muted);width:100%;padding:14px;border-radius:12px;border:1px solid var(--border);font-family:DM Sans,sans-serif;font-weight:700;font-size:15px;cursor:not-allowed';
+      spBtn.disabled = true;
+      spTxt.textContent = `Watch ${7-(S.userStats.adsWatchedToday||0)} more ads to unlock`;
+    }
+  }
+
+  const spBw = document.getElementById('sp-banked-wrap');
+  const spBk = document.getElementById('sp-banked');
+  if (spBw && spBk) {
+    if ((sk.bankedSundays||0) > 0) { spBw.style.display='block'; spBk.textContent = sk.bankedSundays; }
+    else spBw.style.display='none';
+  }
+
+  // ═══ ROADMAP — show next milestones up to Day 60, then three dots to hint more ═══
+  const roadmap = document.getElementById('sp-roadmap');
+  if (roadmap) {
+    const allMilestones = [
+      {day:7,  s:1},
+      {day:14, s:2},
+      {day:30, s:4},
+      {day:60, s:8},
+      {day:90, s:12},
+      {day:180,s:24},
+      {day:365,s:48},
+    ];
+
+    // Upcoming = not yet completed
+    const upcoming = allMilestones.filter(m => s < m.day);
+
+    if (upcoming.length === 0) {
+      roadmap.innerHTML = `<div style="text-align:center;padding:12px 0;font-size:13px;color:var(--secondary)">🏆 All milestones completed! Legend status!</div>`;
+    } else {
+      // Show up to first 3 upcoming milestones; always include Day 60 if it fits
+      const visible = upcoming.slice(0, 3);
+      const hasMore = upcoming.length > 3; // milestones beyond what's shown
+
+      roadmap.innerHTML = visible.map((m, i) => {
+        const isCurrent = i === 0;
+        const daysLeft = m.day - s;
+        const mc = isCurrent ? '#fff' : 'var(--muted)';
+        const isLast = i === visible.length - 1;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;${!isLast ? 'border-bottom:1px solid var(--border)' : ''}">
+          <div style="width:34px;height:34px;border-radius:50%;background:${isCurrent ? color+'22' : 'var(--card2)'};border:1.5px solid ${isCurrent ? color : 'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+            🔥
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:${mc}">Day ${m.day}</div>
+            <div style="font-size:11px;color:var(--muted)">+${m.s} Sunday${m.s!==1?'s':''}</div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:${isCurrent ? color : 'var(--muted)'}">
+            ${isCurrent ? `${daysLeft}d to go` : `${daysLeft}d left`}
+          </div>
+        </div>`;
+      }).join('') + (hasMore ? `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0 4px;">
+          <div style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.15)"></div>
+          <div style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.1)"></div>
+          <div style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.06)"></div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-top:4px">more milestones ahead</div>
+        </div>` : '');
+    }
+  }
+}
+
+function updateCountdown() {
+  const nowUTC = Date.now();
+  const watHours = (new Date(nowUTC).getUTCHours() + 1) % 24;
+  const watMins = new Date(nowUTC).getUTCMinutes();
+  const watSecs = new Date(nowUTC).getUTCSeconds();
+  const secsLeft = (23 - watHours) * 3600 + (59 - watMins) * 60 + (60 - watSecs);
+  const h = Math.floor(secsLeft / 3600);
+  const m = Math.floor((secsLeft % 3600) / 60);
+  const s = secsLeft % 60;
+  const fmt = n => String(n).padStart(2,'0');
+  const ht = document.getElementById('home-timer');
+  if (ht) ht.textContent = `${fmt(h)}:${fmt(m)}:${fmt(s)}`;
+}
+
+// ═══════════════════════════════════════════════
+// TOAST & CONFETTI
+// ═══════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function triggerConfetti(color='#8a33e0', count=80) {
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const colors = [color,'#ffffff','#f5bc0d','#8a33e0','#22c55e'];
+  const pieces = Array.from({length:count}, () => ({
+    x:Math.random()*canvas.width, y:-10-Math.random()*80,
+    r:Math.random()*6+3, color:colors[Math.floor(Math.random()*colors.length)],
+    vx:(Math.random()-.5)*5, vy:Math.random()*4+2, rot:Math.random()*360, rSpeed:(Math.random()-.5)*8,
+  }));
+  let frame;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let alive = false;
+    pieces.forEach(p => {
+      if (p.y < canvas.height+20) alive = true;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, 1-p.y/canvas.height*1.2);
+      ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r); ctx.restore();
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.rSpeed; p.vy+=0.06;
+    });
+    if (alive) frame = requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  cancelAnimationFrame(frame); draw();
+}
+
+// ═══════════════════════════════════════════════
+// TMA SCROLLING FIX
+// ═══════════════════════════════════════════════
+(function initTelegram() {
+  const tg = window.Telegram?.WebApp;
+  if (!tg) return;
+  tg.expand();
+  if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
+  if (typeof tg.enableClosingConfirmation === 'function') tg.enableClosingConfirmation();
+  function applyViewportHeight() {
+    const vh = tg.viewportStableHeight || window.innerHeight;
+    document.documentElement.style.setProperty('--tg-vh', vh + 'px');
+  }
+  applyViewportHeight();
+  tg.onEvent('viewportChanged', applyViewportHeight);
+})();
+
+// Allow all scrollable containers to scroll naturally.
+// Only block bounce/propagation at the hard edges to prevent Telegram intercepting.
+document.addEventListener('touchmove', function(e) {
+  if (e.touches.length > 1) return; // allow pinch-zoom
+  const scrollable = e.target.closest('.scroll, .streak-popup-scroll');
+  // If not inside any scroll container, block to prevent page-level bounce
+  if (!scrollable) { e.preventDefault(); return; }
+  // At boundaries, stop propagation so Telegram doesn't steal it
+  const { scrollTop, scrollHeight, clientHeight } = scrollable;
+  const atTop    = scrollTop <= 0;
+  const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+  const touch    = e.touches[0];
+  // Detect scroll direction
+  const lastY = scrollable._lastTouchY || touch.clientY;
+  const movingDown = touch.clientY > lastY; // finger moving down = scrolling up
+  const movingUp   = touch.clientY < lastY; // finger moving up   = scrolling down
+  scrollable._lastTouchY = touch.clientY;
+  if ((atTop && movingDown) || (atBottom && movingUp)) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener('touchstart', function(e) {
+  const scrollable = e.target.closest('.scroll, .streak-popup-scroll');
+  if (scrollable) scrollable._lastTouchY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', function(e) {
+  const scrollable = e.target.closest('.scroll, .streak-popup-scroll');
+  if (scrollable) delete scrollable._lastTouchY;
+}, { passive: true });
+
+document.documentElement.style.setProperty('--app-height', (window.Telegram?.WebApp?.viewportStableHeight || window.innerHeight) + 'px');
+window.addEventListener('resize', () => {
+  document.documentElement.style.setProperty('--app-height', (window.Telegram?.WebApp?.viewportStableHeight || window.innerHeight) + 'px');
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+setInterval(updateCountdown, 1000);
+setInterval(updateSundayBigTimer, 1000);
+setInterval(async () => {
+  await Promise.all([fetchStats(), fetchUserStats(), fetchStreak(), fetchContactResponses()]);
+  renderAll();
+  checkHeatWindow();
+  checkWinPopup();
+  checkSundayAutoDeduct();
+}, 10000);
+
+updateCountdown();
+updateSundayBigTimer();
+init();
+</script>
+</body>
+</html>
