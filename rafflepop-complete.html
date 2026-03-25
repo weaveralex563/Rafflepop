@@ -585,6 +585,10 @@ canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:150}
 // ═══════════════════════════════════════════════
 const BASE_URL = 'https://rafflepop.onrender.com';
 
+window.onerror = function (msg, url, line, col, error) {
+  alert("ERROR:\n" + msg + "\nLine: " + line);
+};
+
 const MILESTONES = {7:1, 14:2, 30:4, 60:8, 90:12, 180:24, 365:48};
 const MILESTONE_DAYS = [7,14,30,60,90,180,365];
 
